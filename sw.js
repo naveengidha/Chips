@@ -1,4 +1,4 @@
-const CACHE = 'felt-chips-v2';
+const CACHE = 'felt-chips-v3';
 const BASE = self.location.pathname.replace(/\/sw\.js$/, '');
 const ASSETS = [
   BASE + '/index.html',
