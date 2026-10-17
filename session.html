@@ -104,10 +104,12 @@ body{display:flex;flex-direction:column;height:100dvh;max-height:100dvh;overflow
 .villain-add-btn{width:30px;height:30px;background:rgba(255,255,255,0.05);border:1px dashed rgba(255,255,255,0.18);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;color:rgba(255,255,255,0.3);flex-shrink:0;margin-left:2px;}
 .villain-add-btn:active{background:rgba(255,255,255,0.1);}
 
-/* position badge */
-.pos-badge{font-size:9px;font-weight:bold;letter-spacing:.8px;padding:2px 5px;border-radius:3px;cursor:pointer;-webkit-user-select:none;flex-shrink:0;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.28);transition:background .1s;}
-.pos-badge.set{background:rgba(255,212,71,0.12);border-color:rgba(255,212,71,0.35);color:rgba(255,212,71,0.85);}
-.pos-badge:active{opacity:.7;}
+/* position stepper */
+.pos-stepper{display:flex;align-items:center;gap:0;flex-shrink:0;border:1px solid rgba(255,255,255,0.1);border-radius:4px;overflow:hidden;}
+.pos-step-btn{background:rgba(255,255,255,0.04);border:none;color:rgba(255,212,71,0.5);font-size:14px;font-weight:bold;cursor:pointer;padding:3px 7px;line-height:1;-webkit-user-select:none;flex-shrink:0;}
+.pos-step-btn:active{background:rgba(255,212,71,0.1);color:#ffd447;}
+.pos-step-label{font-size:9px;font-weight:bold;letter-spacing:.8px;padding:3px 5px;background:rgba(255,255,255,0.03);color:rgba(255,255,255,0.28);min-width:34px;text-align:center;-webkit-user-select:none;}
+.pos-step-label.set{background:rgba(255,212,71,0.1);color:rgba(255,212,71,0.85);}
 
 /* ── INPUT PANEL (fills remaining space) ── */
 .input-panel{
@@ -229,6 +231,10 @@ input[type=range].result-slider::-moz-range-thumb{width:28px;height:28px;border-
     <div class="field-group">
       <label class="field-label">Buy-in ($)</label>
       <input class="field-input" id="buyinInput" type="number" inputmode="numeric" placeholder="0" min="0">
+    </div>
+    <div class="field-group">
+      <label class="field-label">Players at Table</label>
+      <input class="field-input" id="playerCountSelect" type="number" inputmode="numeric" placeholder="6" min="2" max="10" value="6">
     </div>
     <button class="btn-primary" onclick="startSession()">Start Session</button>
   </div>
@@ -430,8 +436,24 @@ let cards = {};
 let villainCount = 0; // 0..3
 // positions[key] = position string | null — keys: 'hero', 'v1', 'v2', 'v3'
 let positions = {};
+// hero position cursor — tracks what to pre-fill next hand
+let nextHeroPositionIdx = null; // null = unset
 
-const POSITIONS = ['UTG','UTG+1','MP','HJ','CO','BTN','SB','BB'];
+// Full 10-max list; trimmed per player count
+const ALL_POSITIONS = ['UTG','UTG+1','UTG+2','MP','MP2','MP3','CO','BTN','SB','BB'];
+// Positions for N players: always anchor BTN/SB/BB, fill early positions inward
+function positionsForCount(n){
+  if(n<=2)  return ['BTN','BB'];
+  if(n===3) return ['BTN','SB','BB'];
+  if(n===4) return ['CO','BTN','SB','BB'];
+  if(n===5) return ['MP','CO','BTN','SB','BB'];
+  if(n===6) return ['MP','MP2','CO','BTN','SB','BB'];
+  if(n===7) return ['MP','MP2','MP3','CO','BTN','SB','BB'];
+  if(n===8) return ['UTG','MP','MP2','MP3','CO','BTN','SB','BB'];
+  if(n===9) return ['UTG','UTG+1','MP','MP2','MP3','CO','BTN','SB','BB'];
+  return ALL_POSITIONS; // 10
+}
+function sessionPositions(){ return positionsForCount(currentSession?.playerCount||6); }
 
 function freshHand(){
   return { preflop:null, flop:{actions:[]}, turn:{actions:[]}, river:{actions:[]}, result:0, pot:null, heroStack:null, villainStack:null, notes:'' };
@@ -469,6 +491,7 @@ function startSession(){
     venue, gameType:document.getElementById('gameTypeSelect').value,
     stake:(document.getElementById('stakeInput').value||'').trim(),
     buyin:parseInt(document.getElementById('buyinInput').value)||0,
+    playerCount:parseInt(document.getElementById('playerCountSelect').value)||6,
     startedAt:new Date().toISOString(), hands:[], pnl:0
   };
   saveActive(currentSession);
@@ -479,6 +502,7 @@ function showSession(){
   document.getElementById('setupOverlay').classList.remove('open');
   document.getElementById('endOverlay').classList.remove('open');
   document.getElementById('sessionShell').classList.add('open');
+  nextHeroPositionIdx = null; // fresh session — no position pre-filled yet
   resetHand();
   renderTable();
   renderSessionBar();
@@ -599,20 +623,49 @@ function makePCardEl(slot, title){
 
 function makePosBadge(key){
   let pos = positions[key]||null;
-  let badge = document.createElement('span');
-  badge.className = 'pos-badge'+(pos?' set':'');
-  badge.textContent = pos || 'POS';
-  badge.dataset.posKey = key;
-  badge.onclick = () => cyclePosition(key, badge);
-  return badge;
+  let wrap = document.createElement('div');
+  wrap.className = 'pos-stepper';
+  wrap.dataset.posKey = key;
+
+  let prev = document.createElement('button');
+  prev.className = 'pos-step-btn'; prev.textContent = '‹';
+  prev.onclick = e => { e.stopPropagation(); shiftPosition(key, -1); };
+
+  let label = document.createElement('span');
+  label.className = 'pos-step-label' + (pos ? ' set' : '');
+  label.textContent = pos || '–';
+
+  let next = document.createElement('button');
+  next.className = 'pos-step-btn'; next.textContent = '›';
+  next.onclick = e => { e.stopPropagation(); shiftPosition(key, +1); };
+
+  wrap.appendChild(prev);
+  wrap.appendChild(label);
+  wrap.appendChild(next);
+  return wrap;
 }
-function cyclePosition(key, badge){
+
+function shiftPosition(key, dir){
+  let list = sessionPositions();
   let cur = positions[key]||null;
-  let idx = cur ? POSITIONS.indexOf(cur) : -1;
-  let next = POSITIONS[(idx+1) % POSITIONS.length];
-  // if we've wrapped back to index 0 and were already set, allow clearing by second full cycle — instead tap UTG→...→BB→clear
-  if(idx === POSITIONS.length-1){ positions[key]=null; badge.textContent='POS'; badge.className='pos-badge'; }
-  else { positions[key]=next; badge.textContent=next; badge.className='pos-badge set'; }
+  let idx = cur ? list.indexOf(cur) : -1;
+  let newIdx;
+  if(idx === -1){
+    // nothing set yet — dir +1 starts at 0, dir -1 starts at end
+    newIdx = dir > 0 ? 0 : list.length - 1;
+  } else {
+    newIdx = (idx + dir + list.length) % list.length;
+  }
+  positions[key] = list[newIdx];
+  // if hero, also update the cursor for next-hand auto-advance
+  if(key === 'hero') nextHeroPositionIdx = newIdx;
+  // refresh just this stepper in the DOM
+  let wrap = document.querySelector(`.pos-stepper[data-pos-key="${key}"]`);
+  if(wrap){
+    let lbl = wrap.querySelector('.pos-step-label');
+    lbl.textContent = list[newIdx];
+    lbl.className = 'pos-step-label set';
+  }
 }
 
 // ── Card picker ──
@@ -812,6 +865,14 @@ function logHand(){
   currentSession.hands.push(hand);
   currentSession.pnl=(currentSession.pnl||0)+handState.result;
   saveActive(currentSession);
+
+  // advance hero position cursor by 1 for next hand (rotates around the table)
+  if(handPositions.hero){
+    let list = sessionPositions();
+    let idx = list.indexOf(handPositions.hero);
+    if(idx !== -1) nextHeroPositionIdx = (idx + 1) % list.length;
+  }
+
   resetHand();
   renderSessionBar();
   renderHistoryStrip();
@@ -822,7 +883,12 @@ function resetHand(){
   handState=freshHand();
   cards={};
   villainCount=0;
+  // pre-fill hero position from cursor; villains start blank
   positions={};
+  if(nextHeroPositionIdx !== null){
+    let list = sessionPositions();
+    positions['hero'] = list[nextHeroPositionIdx % list.length];
+  }
   activeStreet='preflop';
   // reset action buttons
   document.querySelectorAll('#pfActions .act-btn').forEach(b=>b.className='act-btn');
