@@ -141,7 +141,7 @@ body{display:flex;flex-direction:column;height:100dvh;max-height:100dvh;overflow
   border:1px solid rgba(255,255,255,0.1);border-radius:3px;overflow:hidden;
   margin-top:1px;
 }
-.seat-pos-btn{background:rgba(255,255,255,0.04);border:none;color:rgba(255,212,71,0.5);font-size:11px;font-weight:bold;cursor:pointer;padding:2px 4px;line-height:1;-webkit-user-select:none;}
+.seat-pos-btn{background:rgba(255,255,255,0.04);border:none;color:rgba(255,212,71,0.5);font-size:13px;font-weight:bold;cursor:pointer;padding:4px 7px;line-height:1;-webkit-user-select:none;min-width:24px;}
 .seat-pos-btn:active{background:rgba(255,212,71,0.1);color:#ffd447;}
 .seat-pos-lbl{font-size:7px;font-weight:bold;letter-spacing:.5px;padding:2px 3px;background:rgba(255,255,255,0.03);color:rgba(255,255,255,0.25);min-width:24px;text-align:center;-webkit-user-select:none;}
 .seat-pos-lbl.set{background:rgba(255,212,71,0.1);color:rgba(255,212,71,0.85);}
@@ -264,6 +264,13 @@ input[type=range].result-slider::-moz-range-thumb{width:28px;height:28px;border-
 .log-hand-btn{flex-shrink:0;width:100%;padding:13px;border:none;border-radius:8px;font-size:15px;font-weight:bold;background:linear-gradient(135deg,#c9a227,#ffd447,#c9a227);color:#1a1a0a;cursor:pointer;box-shadow:0 2px 8px rgba(139,94,60,0.4);letter-spacing:.5px;font-family:'Georgia',serif;margin-bottom:max(env(safe-area-inset-bottom),10px);}
 .log-hand-btn:active{opacity:.85;}
 
+/* Multi-select hint */
+.action-hint{font-size:8px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,0.2);margin-bottom:2px;flex-shrink:0;}
+
+/* Log toast */
+.log-toast{position:fixed;top:60px;left:50%;transform:translateX(-50%) translateY(-10px);background:rgba(46,204,113,0.92);color:#0a1a0a;font-size:12px;font-weight:bold;letter-spacing:1px;padding:7px 18px;border-radius:20px;z-index:500;opacity:0;transition:opacity .18s,transform .18s;pointer-events:none;white-space:nowrap;}
+.log-toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
 /* ── SESSION BAR ── */
 .session-bar{flex-shrink:0;background:#0d0f1a;border-top:1px solid rgba(255,212,71,0.15);display:flex;justify-content:space-around;padding:8px 8px max(env(safe-area-inset-bottom),8px);font-size:12px;}
 .sb-item{text-align:center;line-height:1.4;}
@@ -340,7 +347,7 @@ input[type=range].result-slider::-moz-range-thumb{width:28px;height:28px;border-
   <div class="topnav">
     <button class="topnav-back" onclick="goHome()">‹ Home</button>
     <div class="topnav-title" id="sessionTitle">Session</div>
-    <button class="topnav-action" onclick="openEndSession()">End</button>
+    <button class="topnav-action" onclick="confirmEndSession()">End</button>
   </div>
 
   <!-- TABLE CARD -->
@@ -368,79 +375,81 @@ input[type=range].result-slider::-moz-range-thumb{width:28px;height:28px;border-
     <div class="street-pane active" id="pane-preflop">
       <div class="action-group" id="pfActions">
         <button class="act-btn" data-act="fold"  onclick="selectPF('fold',this)">Fold</button>
-        <button class="act-btn" data-act="limp"  onclick="selectPF('limp',this)">Limp</button>
-        <button class="act-btn" data-act="call"  onclick="selectPF('call',this)">Call</button>
+        <button class="act-btn" data-act="limp"  onclick="selectPF('limp',this)">Limp/Call</button>
         <button class="act-btn" data-act="raise" onclick="selectPF('raise',this)">Raise</button>
         <button class="act-btn" data-act="3bet"  onclick="selectPF('3bet',this)">3-Bet</button>
       </div>
       <div class="amount-row" id="pfAmountRow">
         <span class="amount-label">Amount ($)</span>
-        <input class="amount-input" id="pfAmount" type="number" inputmode="numeric" placeholder="0" min="0" oninput="handState.preflopAmount=parseInt(this.value)||null">
+        <input class="amount-input" id="pfAmount" type="number" inputmode="numeric" placeholder="e.g. 12" min="0" oninput="handState.preflopAmount=parseInt(this.value)||null">
       </div>
       <div class="street-nav">
-        <button class="snav-btn fold" onclick="selectPF('fold',document.querySelector('#pfActions [data-act=fold]'));advanceStreet('preflop')">Fold &amp; Log →</button>
         <button class="snav-btn" onclick="advanceStreet('preflop')">Flop →</button>
       </div>
     </div>
 
     <!-- FLOP PANE -->
     <div class="street-pane" id="pane-flop">
+      <div class="action-hint">tap to select · tap again to deselect</div>
       <div class="action-group" id="flopActions"></div>
       <div class="amount-row" id="flopAmountRow">
         <span class="amount-label">Amount ($)</span>
-        <input class="amount-input" id="flopAmount" type="number" inputmode="numeric" placeholder="0" min="0" oninput="handState.flop.amount=parseInt(this.value)||null">
+        <input class="amount-input" id="flopAmount" type="number" inputmode="numeric" placeholder="e.g. 15" min="0" oninput="handState.flop.amount=parseInt(this.value)||null">
       </div>
       <div class="street-nav">
-        <button class="snav-btn fold" onclick="foldStreet('flop')">Fold &amp; Result →</button>
+        <button class="snav-btn fold" onclick="foldStreet('flop')">Fold →</button>
         <button class="snav-btn" onclick="advanceStreet('flop')">Turn →</button>
       </div>
     </div>
 
     <!-- TURN PANE -->
     <div class="street-pane" id="pane-turn">
+      <div class="action-hint">tap to select · tap again to deselect</div>
       <div class="action-group" id="turnActions"></div>
       <div class="amount-row" id="turnAmountRow">
         <span class="amount-label">Amount ($)</span>
-        <input class="amount-input" id="turnAmount" type="number" inputmode="numeric" placeholder="0" min="0" oninput="handState.turn.amount=parseInt(this.value)||null">
+        <input class="amount-input" id="turnAmount" type="number" inputmode="numeric" placeholder="e.g. 30" min="0" oninput="handState.turn.amount=parseInt(this.value)||null">
       </div>
       <div class="street-nav">
-        <button class="snav-btn fold" onclick="foldStreet('turn')">Fold &amp; Result →</button>
+        <button class="snav-btn fold" onclick="foldStreet('turn')">Fold →</button>
         <button class="snav-btn" onclick="advanceStreet('turn')">River →</button>
       </div>
     </div>
 
     <!-- RIVER PANE -->
     <div class="street-pane" id="pane-river">
+      <div class="action-hint">tap to select · tap again to deselect</div>
       <div class="action-group" id="riverActions"></div>
       <div class="amount-row" id="riverAmountRow">
         <span class="amount-label">Amount ($)</span>
-        <input class="amount-input" id="riverAmount" type="number" inputmode="numeric" placeholder="0" min="0" oninput="handState.river.amount=parseInt(this.value)||null">
+        <input class="amount-input" id="riverAmount" type="number" inputmode="numeric" placeholder="e.g. 50" min="0" oninput="handState.river.amount=parseInt(this.value)||null">
       </div>
       <div class="street-nav">
+        <button class="snav-btn fold" onclick="foldStreet('river')">Fold →</button>
         <button class="snav-btn" onclick="advanceStreet('river')">Result →</button>
       </div>
     </div>
 
     <!-- RESULT PANE -->
     <div class="result-pane" id="pane-result">
-      <div class="stack-row">
-        <div>
-          <span class="stack-label">Pot ($)</span>
-          <input class="stack-input" id="potSize" type="number" inputmode="numeric" placeholder="–" min="0" oninput="onStackChange()">
-        </div>
-        <div>
-          <span class="stack-label">Hero ($)</span>
-          <input class="stack-input" id="heroStack" type="number" inputmode="numeric" placeholder="–" min="0" oninput="onStackChange()">
-        </div>
-        <div>
-          <span class="stack-label">Villain ($)</span>
-          <input class="stack-input" id="villainStack" type="number" inputmode="numeric" placeholder="–" min="0" oninput="onStackChange()">
-        </div>
-      </div>
+      <textarea class="notes-input" id="handNotes" placeholder="Notes… (optional)"></textarea>
       <div class="result-display zero" id="resultDisplay">±$0</div>
       <input type="range" class="result-slider" id="resultSlider" min="-500" max="500" step="5" value="0" oninput="onSliderInput(this.value)">
       <div class="slider-ends"><span id="sliderMin">-$500</span><span id="sliderMax">+$500</span></div>
-      <textarea class="notes-input" id="handNotes" placeholder="Notes…"></textarea>
+      <div class="stack-row">
+        <div>
+          <span class="stack-label">Won / Lost ($)</span>
+          <input class="stack-input" id="heroStack" type="number" inputmode="numeric" placeholder="direct entry" min="-9999" oninput="onDirectResult(this.value)">
+        </div>
+        <div>
+          <span class="stack-label">Pot ($)</span>
+          <input class="stack-input" id="potSize" type="number" inputmode="numeric" placeholder="optional" min="0" oninput="handState.pot=parseInt(this.value)||null">
+        </div>
+        <div>
+          <span class="stack-label">Villain ($)</span>
+          <input class="stack-input" id="villainStack" type="number" inputmode="numeric" placeholder="optional" min="0" oninput="handState.villainStack=parseInt(this.value)||null">
+        </div>
+      </div>
     </div>
 
     <button class="log-hand-btn" onclick="logHand()">Log Hand →</button>
@@ -492,8 +501,12 @@ input[type=range].result-slider::-moz-range-thumb{width:28px;height:28px;border-
   <div class="picker-title" id="pickerTitle">Select Card</div>
   <div class="rank-grid" id="pickerRankGrid"></div>
   <div class="suit-row"  id="pickerSuitRow"></div>
-  <button class="picker-clear" onclick="clearPickerCard()">Clear</button>
+  <div style="display:flex;gap:6px;">
+    <button class="picker-clear" style="flex:1" onclick="clearPickerCard()">Clear</button>
+    <button class="picker-clear" style="flex:1" onclick="skipPickerCard()">Skip →</button>
+  </div>
 </div>
+<div class="log-toast" id="logToast">Hand logged</div>
 
 <script>
 // ── Constants ──
@@ -550,7 +563,7 @@ function positionsForCount(n){
 function sessionPositions(){ return positionsForCount(currentSession?.playerCount||6); }
 
 function freshHand(){
-  return { preflop:null, preflopAmount:null, flop:{actions:[],amount:null}, turn:{actions:[],amount:null}, river:{actions:[],amount:null}, result:0, pot:null, heroStack:null, villainStack:null, notes:'' };
+  return { preflop:null, preflopAmount:null, flop:{actions:[],amount:null}, turn:{actions:[],amount:null}, river:{actions:[],amount:null}, result:null, pot:null, heroStack:null, villainStack:null, notes:'' };
 }
 
 // ── Init ──
@@ -870,6 +883,10 @@ function clearPickerCard(){
   refreshPickerHighlights();
   refreshTableCard(pickerSlot);
 }
+function skipPickerCard(){
+  // advance to next slot without saving anything for the current one
+  advancePicker();
+}
 function usedCards(){
   // returns a Set of 'Rs' strings for every fully-entered card except the current slot
   let used = new Set();
@@ -927,6 +944,8 @@ function setActiveStreet(street){
   document.querySelectorAll('.street-pane,.result-pane').forEach(p=>{ p.classList.remove('active'); });
   let pane=document.getElementById('pane-'+street);
   if(pane) pane.classList.add('active');
+  // when entering result pane, seed slider range from buyin
+  if(street==='result') initResultSlider();
   // update community cards visibility
   renderCommunityRowStreet();
 }
@@ -943,8 +962,7 @@ const AMOUNT_ACTS = new Set(['bet','raise','3bet','cbet','call']);
 
 // ── Preflop action ──
 function amountLabel(actions){
-  // single action determines label; call wins if mixed (unusual)
-  if(actions.includes('call')) return 'Call ($)';
+  if(actions.includes('call')||actions.includes('limp')) return 'Call ($)';
   return 'Amount ($)';
 }
 
@@ -953,11 +971,11 @@ function selectPF(act, btn){
   handState.preflop = (handState.preflop===act) ? null : act;
   if(handState.preflop && btn) btn.className='act-btn sel-'+act.replace(/[^a-z]/g,'');
   let row = document.getElementById('pfAmountRow');
-  let show = AMOUNT_ACTS.has(handState.preflop);
+  // limp/call never needs an amount field (it's the BB amount by convention)
+  let show = handState.preflop && !['fold','limp','check'].includes(handState.preflop);
   row.classList.toggle('visible', show);
   if(show){
     row.querySelector('.amount-label').textContent = amountLabel([handState.preflop]);
-    document.getElementById('pfAmount').focus();
   } else {
     handState.preflopAmount=null; document.getElementById('pfAmount').value='';
   }
@@ -978,8 +996,10 @@ function advanceStreet(from){
   setActiveStreet(next);
 }
 function foldStreet(street){
-  // record fold for this street
   handState[street].actions=['fold'];
+  handState[street].amount=null;
+  let amtRow=document.getElementById(street+'AmountRow');
+  if(amtRow){ amtRow.classList.remove('visible'); let inp=document.getElementById(street+'Amount'); if(inp) inp.value=''; }
   document.querySelectorAll(`#${street}Actions .act-btn`).forEach(b=>{
     b.className='act-btn'+(b.dataset.act==='fold'?' sel-fold':'');
   });
@@ -1000,7 +1020,6 @@ function toggleStreetAction(street, act, btn){
     row.classList.toggle('visible', show);
     if(show){
       row.querySelector('.amount-label').textContent = amountLabel(actions);
-      let inp=document.getElementById(street+'Amount'); if(inp) inp.focus();
     } else {
       handState[street].amount=null; let inp=document.getElementById(street+'Amount'); if(inp) inp.value='';
     }
@@ -1008,25 +1027,56 @@ function toggleStreetAction(street, act, btn){
 }
 
 // ── Result ──
-function onStackChange(){
-  let hero=parseInt(document.getElementById('heroStack').value)||0;
-  if(hero>0){
-    let s=document.getElementById('resultSlider');
-    s.min=-hero; s.max=hero;
-    document.getElementById('sliderMin').textContent='-$'+hero;
-    document.getElementById('sliderMax').textContent='+$'+hero;
-    let cur=parseInt(s.value)||0;
-    s.value=Math.max(-hero,Math.min(hero,cur));
-    setResult(parseInt(s.value));
+function initResultSlider(){
+  // seed range from buyin; don't overwrite if already set this hand
+  let buyin = currentSession?.buyin || 500;
+  let s = document.getElementById('resultSlider');
+  if(parseInt(s.max) === 500 && buyin !== 500){
+    s.min=-buyin; s.max=buyin;
+    document.getElementById('sliderMin').textContent='-$'+buyin;
+    document.getElementById('sliderMax').textContent='+$'+buyin;
   }
 }
-function onSliderInput(val){ setResult(parseInt(val)); }
+function onDirectResult(val){
+  let n = parseInt(val);
+  if(isNaN(n)) return;
+  let s = document.getElementById('resultSlider');
+  let bound = Math.max(Math.abs(n), parseInt(s.max)||500);
+  s.min=-bound; s.max=bound;
+  document.getElementById('sliderMin').textContent='-$'+bound;
+  document.getElementById('sliderMax').textContent='+$'+bound;
+  setResult(n);
+}
+function onSliderInput(val){
+  setResult(parseInt(val));
+  // keep direct entry field in sync
+  let inp = document.getElementById('heroStack');
+  if(inp && document.activeElement!==inp) inp.value = val===0?'':val;
+}
 function setResult(val){
   handState.result=val;
   let el=document.getElementById('resultDisplay');
   el.textContent=val===0?'±$0':(val>0?'+$'+val:'-$'+Math.abs(val));
   el.className='result-display '+(val>0?'pos':val<0?'neg':'zero');
   let s=document.getElementById('resultSlider'); if(s) s.value=val;
+}
+
+// ── End session (guarded) ──
+function confirmEndSession(){
+  let hands=(currentSession.hands||[]).length;
+  if(hands===0||confirm('End session? ('+hands+' hand'+(hands!==1?'s':'')+' recorded)')){
+    openEndSession();
+  }
+}
+
+// ── Log toast ──
+let _toastTimer=null;
+function showLogToast(){
+  let t=document.getElementById('logToast');
+  if(!t) return;
+  clearTimeout(_toastTimer);
+  t.classList.add('show');
+  _toastTimer=setTimeout(()=>t.classList.remove('show'),1200);
 }
 
 // ── Log hand ──
@@ -1074,7 +1124,7 @@ function logHand(){
   };
 
   currentSession.hands.push(hand);
-  currentSession.pnl=(currentSession.pnl||0)+handState.result;
+  currentSession.pnl=(currentSession.pnl||0)+(handState.result||0);
   saveActive(currentSession);
 
   // advance hero position cursor by 1 for next hand (rotates around the table)
@@ -1087,6 +1137,7 @@ function logHand(){
   resetHand();
   renderSessionBar();
   renderHistoryStrip();
+  showLogToast();
 }
 
 // ── Reset for next hand ──
@@ -1118,8 +1169,9 @@ function resetHand(){
   // reset panes
   document.querySelectorAll('.street-pane,.result-pane').forEach(p=>p.classList.remove('active'));
   document.getElementById('pane-preflop').classList.add('active');
-  // reset result
-  setResult(0);
+  // reset result UI (don't call setResult — keeps handState.result as null from freshHand)
+  let el=document.getElementById('resultDisplay');
+  if(el){ el.textContent='±$0'; el.className='result-display zero'; }
   let s=document.getElementById('resultSlider'); if(s){s.min=-500;s.max=500;s.value=0;}
   document.getElementById('sliderMin').textContent='-$500';
   document.getElementById('sliderMax').textContent='+$500';
@@ -1157,8 +1209,9 @@ function renderHistoryStrip(){
   let hands=(currentSession?.hands||[]);
   let el=document.getElementById('historyStrip');
   el.innerHTML=hands.map((h,i)=>{
-    let cls=h.preflop==='fold'?'fold':(h.result>0?'win':h.result<0?'loss':'even');
-    let lbl=h.preflop==='fold'?'F':(h.result>0?'+':h.result<0?'−':'=');
+    let r=h.result;
+    let cls=h.preflop==='fold'?'fold':(r==null?'even':r>0?'win':r<0?'loss':'even');
+    let lbl=h.preflop==='fold'?'F':(r==null?'–':r>0?'+':r<0?'−':'=');
     return `<div class="hh-dot ${cls}" title="Hand ${i+1}">${lbl}</div>`;
   }).join('');
 }
