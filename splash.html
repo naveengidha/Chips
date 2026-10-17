@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Felt & Chips">
+<meta name="theme-color" content="#08090f">
+<title>Felt &amp; Chips</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon.svg">
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{margin:0;padding:0;height:100%;background:#08090f;font-family:'Georgia','Times New Roman',serif;color:#fff;overscroll-behavior:none;}
+body{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100dvh;}
+.crest{margin-bottom:28px;opacity:0;animation:fadeUp .8s ease forwards .2s;}
+.title{font-size:28px;font-weight:bold;letter-spacing:4px;text-transform:uppercase;color:#ffd447;text-align:center;margin:0 0 8px;opacity:0;animation:fadeUp .7s ease forwards .55s;}
+.subtitle{font-size:12px;letter-spacing:3px;text-transform:uppercase;color:rgba(255,212,71,0.4);text-align:center;margin:0;opacity:0;animation:fadeUp .7s ease forwards .75s;}
+.divider{width:60px;height:1px;background:linear-gradient(90deg,transparent,rgba(255,212,71,0.5),transparent);margin:20px auto 0;opacity:0;animation:fadeUp .6s ease forwards .9s;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
+</style>
+<script>
+if(!sessionStorage.getItem('fcSplashSeen')){
+  sessionStorage.setItem('fcSplashSeen','1');
+  setTimeout(()=>{ window.location.replace('index.html'); }, 3200);
+} else {
+  window.location.replace('index.html');
+}
+</script>
+</head>
+<body>
+
+<svg class="crest" width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Outer rings -->
+  <circle cx="60" cy="60" r="57" stroke="rgba(184,150,46,0.4)" stroke-width="1.5"/>
+  <circle cx="60" cy="60" r="50" stroke="rgba(184,150,46,0.2)" stroke-width="1"/>
+  <!-- Diamond suit dots around border -->
+  <g fill="rgba(212,180,80,0.35)">
+    <polygon points="60,5 62,8 60,11 58,8" transform="rotate(0,60,60)"/>
+    <polygon points="60,5 62,8 60,11 58,8" transform="rotate(30,60,60)"/>
+    <polygon points="60,5 62,8 60,11 58,8" transform="rotate(60,60,60)"/>
+    <polygon points="60,5 62,8 60,11 58,8" transform="rotate(90,60,60)"/>
+    <polygon points="60,5 62,8 60,11 58,8" transform="rotate(120,60,60)"/>
+    <polygon points="60,5 62,8 60,11 58,8" transform="rotate(150,60,60)"/>
+    <polygon points="60,5 62,8 60,11 58,8" transform="rotate(180,60,60)"/>
+    <polygon points="60,5 62,8 60,11 58,8" transform="rotate(210,60,60)"/>
+    <polygon points="60,5 62,8 60,11 58,8" transform="rotate(240,60,60)"/>
+    <polygon points="60,5 62,8 60,11 58,8" transform="rotate(270,60,60)"/>
+    <polygon points="60,5 62,8 60,11 58,8" transform="rotate(300,60,60)"/>
+    <polygon points="60,5 62,8 60,11 58,8" transform="rotate(330,60,60)"/>
+  </g>
+  <!-- Shield -->
+  <path d="M60 22 L84 34 L84 62 Q84 80 60 93 Q36 80 36 62 L36 34 Z"
+        fill="rgba(255,212,71,0.04)" stroke="#8B6914" stroke-width="1.5"/>
+  <!-- Card suits inside shield -->
+  <!-- Spade -->
+  <text x="43" y="56" font-size="14" fill="rgba(255,212,71,0.7)" font-family="Georgia,serif">♠</text>
+  <!-- Heart -->
+  <text x="63" y="56" font-size="14" fill="rgba(180,60,60,0.8)" font-family="Georgia,serif">♥</text>
+  <!-- Diamond -->
+  <text x="43" y="74" font-size="14" fill="rgba(180,60,60,0.8)" font-family="Georgia,serif">♦</text>
+  <!-- Club -->
+  <text x="63" y="74" font-size="14" fill="rgba(255,212,71,0.7)" font-family="Georgia,serif">♣</text>
+  <!-- Bottom arc text -->
+  <path id="bottomArc" d="M 19,73 A 42,42 0 0,0 101,73" fill="none"/>
+  <text font-family="Georgia,'Times New Roman',serif" font-size="8.5" font-weight="bold"
+        fill="rgba(255,212,71,0.85)" letter-spacing="2">
+    <textPath href="#bottomArc" startOffset="50%" text-anchor="middle">FELT &amp; CHIPS</textPath>
+  </text>
+</svg>
+
+<h1 class="title">Felt &amp; Chips</h1>
+<p class="subtitle">Your private table</p>
+<div class="divider"></div>
+
+<script>
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('sw.js').catch(()=>{});
+}
+</script>
+</body>
+</html>

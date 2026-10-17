@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Felt &amp; Chips">
+<meta name="theme-color" content="#08090f">
+<title>Session · Felt &amp; Chips</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon.svg">
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{margin:0;padding:0;height:100%;background:#08090f;font-family:'Georgia','Times New Roman',serif;color:#fff;overscroll-behavior:none;}
+body{display:flex;flex-direction:column;height:100dvh;max-height:100dvh;overflow:hidden;}
+
+/* ════ OVERLAYS (setup / end session) ════ */
+.overlay{display:none;position:fixed;inset:0;background:#08090f;z-index:300;flex-direction:column;overflow:hidden;}
+.overlay.open{display:flex;}
+.topnav{display:flex;align-items:center;background:#0d0f1a;padding:10px 14px;gap:10px;flex-shrink:0;border-bottom:1px solid rgba(139,94,60,0.3);box-shadow:0 2px 12px rgba(0,0,0,0.6);}
+.topnav-back{background:none;border:none;color:rgba(255,212,71,0.8);font-size:15px;font-weight:bold;cursor:pointer;padding:4px 8px 4px 0;white-space:nowrap;letter-spacing:.5px;font-family:'Georgia',serif;}
+.topnav-back:active{color:#ffd447;}
+.topnav-title{flex:1;text-align:center;color:#ffd447;font-size:13px;font-weight:bold;letter-spacing:3px;text-transform:uppercase;}
+.topnav-action{background:none;border:none;color:rgba(255,212,71,0.7);font-size:13px;font-weight:bold;cursor:pointer;padding:4px 0 4px 8px;white-space:nowrap;letter-spacing:.5px;font-family:'Georgia',serif;}
+.topnav-action:active{color:#ffd447;}
+.scroll-area{flex:1;overflow-y:auto;padding:16px 14px 120px;}
+.field-label{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,212,71,0.45);margin-bottom:6px;display:block;}
+.field-group{margin-bottom:14px;}
+.field-input,.field-select{width:100%;padding:11px 12px;border-radius:6px;border:1px solid rgba(139,94,60,0.2);border-bottom:2px solid rgba(139,94,60,0.35);background:#0d0f1a;color:#fff;font-size:15px;font-family:'Georgia',serif;color-scheme:dark;-webkit-appearance:none;}
+.field-input::placeholder{color:rgba(255,255,255,0.2);}
+.field-input:focus,.field-select:focus{outline:none;border-color:rgba(255,212,71,0.6);}
+.field-select option{background:#0d0f1a;}
+.btn-primary{width:100%;padding:14px;border:none;border-radius:6px;font-size:14px;font-weight:bold;letter-spacing:2px;text-transform:uppercase;background:linear-gradient(135deg,#b8962e,#ffd700,#b8962e);color:#0a0a0f;cursor:pointer;box-shadow:0 2px 12px rgba(180,150,46,0.3);font-family:'Georgia',serif;}
+.btn-primary:active{opacity:.85;}
+.btn-secondary{width:100%;padding:11px;border:1px solid rgba(139,94,60,0.35);border-radius:6px;font-size:13px;font-weight:bold;letter-spacing:1.5px;text-transform:uppercase;background:none;color:#a07840;cursor:pointer;margin-top:8px;font-family:'Georgia',serif;}
+.btn-secondary:active{background:rgba(139,94,60,0.08);}
+.btn-danger{width:100%;padding:11px;border:1px solid rgba(200,50,50,0.35);border-radius:6px;font-size:13px;font-weight:bold;letter-spacing:1.5px;text-transform:uppercase;background:none;color:rgba(220,100,100,0.8);cursor:pointer;margin-top:8px;font-family:'Georgia',serif;}
+.btn-danger:active{background:rgba(200,50,50,0.1);}
+
+/* ════ SESSION SHELL (fixed, no scroll) ════ */
+#sessionShell{display:none;flex-direction:column;height:100dvh;overflow:hidden;}
+#sessionShell.open{display:flex;}
+
+/* Top nav */
+#sessionShell .topnav{flex-shrink:0;}
+
+/* ── TABLE CARD ── */
+.table-card{
+  flex-shrink:0;
+  background:radial-gradient(ellipse at 50% 60%, #1a4a2e 0%, #0e2d1a 55%, #081a10 100%);
+  border-bottom:2px solid rgba(255,212,71,0.15);
+  padding:8px 12px 10px;
+  position:relative;
+}
+/* felt texture overlay */
+.table-card::before{
+  content:'';position:absolute;inset:0;
+  background:repeating-linear-gradient(0deg,rgba(0,0,0,0.04) 0,rgba(0,0,0,0.04) 1px,transparent 1px,transparent 3px),
+             repeating-linear-gradient(90deg,rgba(0,0,0,0.04) 0,rgba(0,0,0,0.04) 1px,transparent 1px,transparent 3px);
+  pointer-events:none;
+}
+/* table rail edge */
+.table-card::after{
+  content:'';position:absolute;bottom:0;left:0;right:0;height:3px;
+  background:linear-gradient(90deg,transparent,rgba(255,212,71,0.2),transparent);
+}
+
+/* history dots row */
+.history-row{display:flex;align-items:center;gap:3px;margin-bottom:8px;min-height:18px;flex-wrap:wrap;}
+.hh-dot{width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:bold;flex-shrink:0;}
+.hh-dot.win{background:rgba(46,204,113,0.25);color:#2ecc71;border:1px solid rgba(46,204,113,0.4);}
+.hh-dot.loss{background:rgba(220,80,80,0.2);color:#e07070;border:1px solid rgba(220,80,80,0.35);}
+.hh-dot.fold{background:rgba(120,120,140,0.12);color:rgba(180,180,200,0.45);border:1px solid rgba(150,150,170,0.18);}
+.hh-dot.even{background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.28);border:1px solid rgba(255,255,255,0.1);}
+
+/* card rows */
+.cards-area{display:flex;flex-direction:column;gap:6px;position:relative;z-index:1;}
+.cards-row{display:flex;align-items:center;gap:4px;}
+.cards-row-label{font-size:8px;font-weight:bold;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,0.25);width:44px;flex-shrink:0;text-align:right;padding-right:6px;}
+
+/* individual playing card */
+.pcard{
+  width:36px;height:50px;border-radius:5px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  cursor:pointer;flex-shrink:0;position:relative;
+  border:1px solid rgba(255,255,255,0.12);
+  transition:border-color .15s, transform .1s;
+  -webkit-user-select:none;
+}
+.pcard:active{transform:scale(0.94);}
+.pcard.empty{background:rgba(255,255,255,0.04);border-style:dashed;border-color:rgba(255,255,255,0.1);}
+.pcard.empty .pcard-inner{color:rgba(255,255,255,0.12);font-size:14px;}
+.pcard.filled{background:#fff;}
+.pcard.filled-red{background:#fff;}
+.pcard-inner{font-size:15px;font-weight:bold;font-family:'Georgia',serif;line-height:1;text-align:center;}
+.pcard.filled .pcard-inner,.pcard.filled-red .pcard-inner{color:#1a1a1a;}
+.pcard-suit{font-size:11px;line-height:1;text-align:center;}
+.pcard.filled .pcard-suit-red{color:#c0202a;}
+.pcard.filled .pcard-suit-black{color:#1a1a1a;}
+/* community placeholder gap */
+.pcard-gap{width:36px;height:50px;flex-shrink:0;opacity:0;pointer-events:none;}
+/* villain add button */
+.villain-add-btn{width:30px;height:30px;background:rgba(255,255,255,0.05);border:1px dashed rgba(255,255,255,0.18);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;color:rgba(255,255,255,0.3);flex-shrink:0;margin-left:2px;}
+.villain-add-btn:active{background:rgba(255,255,255,0.1);}
+
+/* position badge */
+.pos-badge{font-size:9px;font-weight:bold;letter-spacing:.8px;padding:2px 5px;border-radius:3px;cursor:pointer;-webkit-user-select:none;flex-shrink:0;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.28);transition:background .1s;}
+.pos-badge.set{background:rgba(255,212,71,0.12);border-color:rgba(255,212,71,0.35);color:rgba(255,212,71,0.85);}
+.pos-badge:active{opacity:.7;}
+
+/* ── INPUT PANEL (fills remaining space) ── */
+.input-panel{
+  flex:1;
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+  padding:10px 12px 0;
+  min-height:0;
+}
+.hand-number{font-size:9px;font-weight:bold;letter-spacing:2px;text-transform:uppercase;color:rgba(255,212,71,0.38);margin-bottom:6px;flex-shrink:0;}
+
+/* Street tabs (Preflop / Flop / Turn / River) */
+.street-tabs{display:flex;gap:4px;margin-bottom:8px;flex-shrink:0;}
+.street-tab{flex:1;padding:6px 4px;border-radius:5px;font-size:10px;font-weight:bold;letter-spacing:.8px;text-transform:uppercase;border:1px solid rgba(255,255,255,0.07);background:rgba(255,255,255,0.03);color:rgba(255,255,255,0.3);text-align:center;cursor:pointer;-webkit-user-select:none;}
+.street-tab.active{background:rgba(255,212,71,0.1);border-color:rgba(255,212,71,0.35);color:#ffd447;}
+.street-tab.done{background:rgba(46,180,100,0.08);border-color:rgba(46,180,100,0.25);color:rgba(46,180,100,0.65);}
+.street-tab.locked{opacity:.35;pointer-events:none;}
+
+/* Street content pane */
+.street-pane{flex:1;min-height:0;display:none;flex-direction:column;gap:6px;}
+.street-pane.active{display:flex;}
+
+/* Action buttons */
+.action-group{display:flex;gap:5px;flex-wrap:wrap;}
+.act-btn{flex:1;min-width:56px;padding:10px 4px;border-radius:6px;font-size:13px;font-weight:bold;cursor:pointer;border:1px solid rgba(139,94,60,0.2);background:#0e1018;color:rgba(255,255,255,0.45);letter-spacing:.3px;font-family:'Georgia',serif;-webkit-user-select:none;}
+.act-btn:active{transform:scale(0.96);}
+.act-btn.sel-fold{background:rgba(100,100,120,0.2);color:rgba(180,180,200,0.8);border-color:rgba(180,180,200,0.3);}
+.act-btn.sel-limp,.act-btn.sel-call{background:rgba(46,100,200,0.15);color:rgba(120,180,255,0.9);border-color:rgba(80,140,240,0.35);}
+.act-btn.sel-raise,.act-btn.sel-3bet,.act-btn.sel-bet,.act-btn.sel-cbet{background:rgba(200,140,46,0.15);color:rgba(255,200,80,0.9);border-color:rgba(220,160,46,0.4);}
+.act-btn.sel-check{background:rgba(46,160,100,0.15);color:rgba(100,220,150,0.9);border-color:rgba(46,180,100,0.35);}
+.act-btn.sel-bluff{background:rgba(200,50,50,0.15);color:rgba(255,110,110,0.9);border-color:rgba(200,60,60,0.4);}
+.act-btn.sel-allin{background:rgba(140,50,200,0.15);color:rgba(200,130,255,0.9);border-color:rgba(160,70,220,0.4);}
+
+/* Street nav row (Fold / advance) */
+.street-nav{display:flex;gap:6px;flex-shrink:0;}
+.snav-btn{flex:1;padding:9px 6px;border-radius:6px;font-size:12px;font-weight:bold;cursor:pointer;border:1px solid rgba(255,212,71,0.2);background:rgba(255,212,71,0.05);color:rgba(255,212,71,0.65);letter-spacing:.5px;font-family:'Georgia',serif;}
+.snav-btn:active{background:rgba(255,212,71,0.12);color:#ffd447;}
+.snav-btn.fold{border-color:rgba(180,180,200,0.2);background:rgba(100,100,120,0.08);color:rgba(180,180,200,0.5);}
+.snav-btn.fold:active{background:rgba(100,100,120,0.18);}
+
+/* Result pane */
+.result-pane{flex:1;min-height:0;display:none;flex-direction:column;gap:6px;}
+.result-pane.active{display:flex;}
+.stack-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;flex-shrink:0;}
+.stack-label{font-size:8px;letter-spacing:1.2px;text-transform:uppercase;color:rgba(255,212,71,0.4);display:block;margin-bottom:3px;}
+.stack-input{width:100%;padding:7px 6px;border-radius:5px;border:1px solid rgba(139,94,60,0.2);border-bottom:2px solid rgba(139,94,60,0.3);background:#0d0f1a;color:#fff;font-size:14px;font-family:'Courier New',monospace;color-scheme:dark;text-align:center;}
+.stack-input:focus{outline:none;border-color:rgba(255,212,71,0.5);}
+.stack-input::placeholder{color:rgba(255,255,255,0.18);font-family:'Georgia',serif;font-size:11px;}
+.result-display{text-align:center;font-size:22px;font-weight:bold;font-family:'Courier New',monospace;flex-shrink:0;}
+.result-display.pos{color:#2ecc71;}
+.result-display.neg{color:#e07070;}
+.result-display.zero{color:rgba(255,255,255,0.3);}
+input[type=range].result-slider{-webkit-appearance:none;appearance:none;width:100%;height:4px;border-radius:2px;background:rgba(255,255,255,0.1);outline:none;cursor:pointer;flex-shrink:0;}
+input[type=range].result-slider::-webkit-slider-thumb{-webkit-appearance:none;width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#c9a227,#ffd447);box-shadow:0 1px 6px rgba(0,0,0,0.5);}
+input[type=range].result-slider::-moz-range-thumb{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#c9a227,#ffd447);border:none;}
+.slider-ends{display:flex;justify-content:space-between;font-size:10px;color:rgba(255,255,255,0.22);font-family:'Courier New',monospace;}
+.notes-input{flex:1;min-height:36px;max-height:60px;padding:8px 10px;border-radius:6px;border:1px solid rgba(139,94,60,0.15);background:rgba(0,0,0,0.2);color:rgba(255,255,255,0.65);font-size:13px;resize:none;font-family:'Georgia',serif;color-scheme:dark;}
+.notes-input::placeholder{color:rgba(255,255,255,0.18);}
+.notes-input:focus{outline:none;border-color:rgba(255,212,71,0.4);}
+
+/* Log hand button */
+.log-hand-btn{flex-shrink:0;width:100%;padding:13px;border:none;border-radius:8px;font-size:15px;font-weight:bold;background:linear-gradient(135deg,#c9a227,#ffd447,#c9a227);color:#1a1a0a;cursor:pointer;box-shadow:0 2px 8px rgba(139,94,60,0.4);letter-spacing:.5px;font-family:'Georgia',serif;margin-bottom:max(env(safe-area-inset-bottom),10px);}
+.log-hand-btn:active{opacity:.85;}
+
+/* ── SESSION BAR ── */
+.session-bar{flex-shrink:0;background:#0d0f1a;border-top:1px solid rgba(255,212,71,0.15);display:flex;justify-content:space-around;padding:8px 8px max(env(safe-area-inset-bottom),8px);font-size:12px;}
+.sb-item{text-align:center;line-height:1.4;}
+.sb-item small{display:block;color:rgba(255,212,71,0.4);font-size:8px;letter-spacing:1.5px;text-transform:uppercase;}
+.sb-item span{font-weight:bold;color:#fff;font-family:'Courier New',monospace;font-size:13px;}
+
+/* ════ CARD PICKER BOTTOM SHEET ════ */
+.picker-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:400;}
+.picker-backdrop.open{display:block;}
+.picker-sheet{position:fixed;bottom:0;left:0;right:0;background:#0d0f1a;border-radius:16px 16px 0 0;border-top:1px solid rgba(255,212,71,0.2);padding:14px 14px max(env(safe-area-inset-bottom),16px);z-index:401;transform:translateY(100%);transition:transform .25s ease;}
+.picker-sheet.open{transform:translateY(0);}
+.picker-handle{width:36px;height:4px;background:rgba(255,255,255,0.15);border-radius:2px;margin:0 auto 12px;}
+.picker-title{font-size:10px;font-weight:bold;letter-spacing:2px;text-transform:uppercase;color:rgba(255,212,71,0.45);text-align:center;margin-bottom:10px;}
+.rank-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-bottom:8px;}
+.rank-btn{padding:9px 2px;border-radius:5px;font-size:13px;font-weight:bold;cursor:pointer;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.04);color:rgba(255,255,255,0.55);text-align:center;-webkit-user-select:none;}
+.rank-btn.sel{background:rgba(255,212,71,0.15);border-color:rgba(255,212,71,0.45);color:#ffd447;}
+.suit-row{display:flex;gap:6px;margin-bottom:10px;}
+.suit-btn{flex:1;padding:10px 4px;border-radius:5px;font-size:18px;cursor:pointer;border:1px solid rgba(255,255,255,0.08);background:rgba(255,255,255,0.04);text-align:center;-webkit-user-select:none;}
+.suit-btn.sel-s,.suit-btn.sel-c{background:rgba(255,212,71,0.12);border-color:rgba(255,212,71,0.4);}
+.suit-btn.sel-h,.suit-btn.sel-d{background:rgba(200,50,50,0.15);border-color:rgba(200,80,80,0.4);}
+.picker-clear{width:100%;padding:9px;border:1px solid rgba(255,255,255,0.1);border-radius:6px;background:none;color:rgba(255,255,255,0.35);font-size:12px;font-weight:bold;cursor:pointer;letter-spacing:1px;font-family:'Georgia',serif;}
+.picker-clear:active{background:rgba(255,255,255,0.06);}
+</style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════
+     SETUP OVERLAY
+     ════════════════════════════════════ -->
+<div class="overlay open" id="setupOverlay">
+  <div class="topnav">
+    <button class="topnav-back" onclick="window.location.href='index.html'">‹ Sessions</button>
+    <div class="topnav-title">New Session</div>
+    <div style="width:70px;"></div>
+  </div>
+  <div class="scroll-area">
+    <div class="field-group">
+      <label class="field-label">Venue / Location</label>
+      <input class="field-input" id="venueInput" placeholder="e.g. Home game, Casino" autocomplete="off" autocorrect="off">
+    </div>
+    <div class="field-group">
+      <label class="field-label">Game Type</label>
+      <select class="field-select" id="gameTypeSelect">
+        <option value="NL Hold'em">NL Hold'em</option>
+        <option value="PL Omaha">PL Omaha</option>
+        <option value="Limit Hold'em">Limit Hold'em</option>
+        <option value="Mixed">Mixed</option>
+      </select>
+    </div>
+    <div class="field-group">
+      <label class="field-label">Stakes / Blind Level</label>
+      <input class="field-input" id="stakeInput" placeholder="e.g. $1/$2, $2/$5" autocomplete="off">
+    </div>
+    <div class="field-group">
+      <label class="field-label">Buy-in ($)</label>
+      <input class="field-input" id="buyinInput" type="number" inputmode="numeric" placeholder="0" min="0">
+    </div>
+    <button class="btn-primary" onclick="startSession()">Start Session</button>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════
+     SESSION SHELL
+     ════════════════════════════════════ -->
+<div id="sessionShell">
+
+  <!-- Top nav -->
+  <div class="topnav">
+    <button class="topnav-back" onclick="goHome()">‹ Home</button>
+    <div class="topnav-title" id="sessionTitle">Session</div>
+    <button class="topnav-action" onclick="openEndSession()">End</button>
+  </div>
+
+  <!-- TABLE CARD -->
+  <div class="table-card">
+    <!-- history dots -->
+    <div class="history-row" id="historyStrip"></div>
+
+    <div class="cards-area">
+      <!-- Community cards -->
+      <div class="cards-row" id="communityRow">
+        <span class="cards-row-label">Board</span>
+        <!-- 5 community slots, populated by JS -->
+      </div>
+      <!-- Hero -->
+      <div class="cards-row" id="heroRow">
+        <span class="cards-row-label">Hero</span>
+        <!-- 2 hero slots -->
+      </div>
+      <!-- Villain rows (up to 3) -->
+      <div id="villainRows"></div>
+    </div>
+  </div>
+
+  <!-- INPUT PANEL -->
+  <div class="input-panel">
+    <div class="hand-number" id="handNumber">Hand #1</div>
+
+    <!-- Street tabs -->
+    <div class="street-tabs" id="streetTabs">
+      <div class="street-tab active" data-street="preflop" onclick="switchTab('preflop')">Pre-Flop</div>
+      <div class="street-tab locked" data-street="flop"    onclick="switchTab('flop')">Flop</div>
+      <div class="street-tab locked" data-street="turn"    onclick="switchTab('turn')">Turn</div>
+      <div class="street-tab locked" data-street="river"   onclick="switchTab('river')">River</div>
+      <div class="street-tab locked" data-street="result"  onclick="switchTab('result')">Result</div>
+    </div>
+
+    <!-- PREFLOP PANE -->
+    <div class="street-pane active" id="pane-preflop">
+      <div class="action-group" id="pfActions">
+        <button class="act-btn" data-act="fold"  onclick="selectPF('fold',this)">Fold</button>
+        <button class="act-btn" data-act="limp"  onclick="selectPF('limp',this)">Limp</button>
+        <button class="act-btn" data-act="call"  onclick="selectPF('call',this)">Call</button>
+        <button class="act-btn" data-act="raise" onclick="selectPF('raise',this)">Raise</button>
+        <button class="act-btn" data-act="3bet"  onclick="selectPF('3bet',this)">3-Bet</button>
+      </div>
+      <div class="street-nav">
+        <button class="snav-btn fold" onclick="selectPF('fold',document.querySelector('#pfActions [data-act=fold]'));advanceStreet('preflop')">Fold &amp; Log →</button>
+        <button class="snav-btn" onclick="advanceStreet('preflop')">Flop →</button>
+      </div>
+    </div>
+
+    <!-- FLOP PANE -->
+    <div class="street-pane" id="pane-flop">
+      <div class="action-group" id="flopActions"></div>
+      <div class="street-nav">
+        <button class="snav-btn fold" onclick="foldStreet('flop')">Fold &amp; Result →</button>
+        <button class="snav-btn" onclick="advanceStreet('flop')">Turn →</button>
+      </div>
+    </div>
+
+    <!-- TURN PANE -->
+    <div class="street-pane" id="pane-turn">
+      <div class="action-group" id="turnActions"></div>
+      <div class="street-nav">
+        <button class="snav-btn fold" onclick="foldStreet('turn')">Fold &amp; Result →</button>
+        <button class="snav-btn" onclick="advanceStreet('turn')">River →</button>
+      </div>
+    </div>
+
+    <!-- RIVER PANE -->
+    <div class="street-pane" id="pane-river">
+      <div class="action-group" id="riverActions"></div>
+      <div class="street-nav">
+        <button class="snav-btn" onclick="advanceStreet('river')">Result →</button>
+      </div>
+    </div>
+
+    <!-- RESULT PANE -->
+    <div class="result-pane" id="pane-result">
+      <div class="stack-row">
+        <div>
+          <span class="stack-label">Pot ($)</span>
+          <input class="stack-input" id="potSize" type="number" inputmode="numeric" placeholder="–" min="0" oninput="onStackChange()">
+        </div>
+        <div>
+          <span class="stack-label">Hero ($)</span>
+          <input class="stack-input" id="heroStack" type="number" inputmode="numeric" placeholder="–" min="0" oninput="onStackChange()">
+        </div>
+        <div>
+          <span class="stack-label">Villain ($)</span>
+          <input class="stack-input" id="villainStack" type="number" inputmode="numeric" placeholder="–" min="0" oninput="onStackChange()">
+        </div>
+      </div>
+      <div class="result-display zero" id="resultDisplay">±$0</div>
+      <input type="range" class="result-slider" id="resultSlider" min="-500" max="500" step="5" value="0" oninput="onSliderInput(this.value)">
+      <div class="slider-ends"><span id="sliderMin">-$500</span><span id="sliderMax">+$500</span></div>
+      <textarea class="notes-input" id="handNotes" placeholder="Notes…"></textarea>
+    </div>
+
+    <button class="log-hand-btn" onclick="logHand()">Log Hand →</button>
+  </div>
+
+  <!-- Session bar -->
+  <div class="session-bar">
+    <div class="sb-item"><span id="sbHands">0</span><small>Hands</small></div>
+    <div class="sb-item"><span id="sbVpip">–</span><small>VPIP</small></div>
+    <div class="sb-item"><span id="sbPfr">–</span><small>PFR</small></div>
+    <div class="sb-item"><span id="sbPnl" style="color:rgba(255,255,255,0.35);">±$0</span><small>P&amp;L</small></div>
+  </div>
+
+</div><!-- #sessionShell -->
+
+<!-- ════════════════════════════════════
+     END SESSION OVERLAY
+     ════════════════════════════════════ -->
+<div class="overlay" id="endOverlay">
+  <div class="topnav">
+    <button class="topnav-back" onclick="closeEndSession()">‹ Back</button>
+    <div class="topnav-title">End Session</div>
+    <div style="width:70px;"></div>
+  </div>
+  <div class="scroll-area">
+    <div style="background:rgba(0,0,0,0.2);border:1px solid rgba(255,212,71,0.12);border-radius:10px;padding:14px;margin-bottom:14px;">
+      <div style="color:#ffd447;font-size:13px;letter-spacing:1px;text-transform:uppercase;margin-bottom:12px;font-family:'Georgia',serif;">Summary</div>
+      <div id="endSummaryStats"></div>
+    </div>
+    <div class="field-group">
+      <label class="field-label">Cash-out ($) — optional override</label>
+      <input class="field-input" id="cashoutInput" type="number" inputmode="numeric" placeholder="Leave blank to use hand totals">
+    </div>
+    <div class="field-group">
+      <label class="field-label">Session Notes</label>
+      <textarea class="field-input" id="sessionNotes" rows="3" placeholder="Overall notes, reads, lessons…" style="resize:none;min-height:64px;"></textarea>
+    </div>
+    <button class="btn-primary"  onclick="endSession()">Save Session</button>
+    <button class="btn-danger"   onclick="discardSession()">Discard Session</button>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════
+     CARD PICKER BOTTOM SHEET
+     ════════════════════════════════════ -->
+<div class="picker-backdrop" id="pickerBackdrop" onclick="closePicker()"></div>
+<div class="picker-sheet" id="pickerSheet">
+  <div class="picker-handle"></div>
+  <div class="picker-title" id="pickerTitle">Select Card</div>
+  <div class="rank-grid" id="pickerRankGrid"></div>
+  <div class="suit-row"  id="pickerSuitRow"></div>
+  <button class="picker-clear" onclick="clearPickerCard()">Clear</button>
+</div>
+
+<script>
+// ── Constants ──
+const RANKS = ['A','2','3','4','5','6','7','8','9','T','J','Q','K'];
+const SUITS = [
+  {key:'s', sym:'♠', color:'black'},
+  {key:'h', sym:'♥', color:'red'},
+  {key:'d', sym:'♦', color:'red'},
+  {key:'c', sym:'♣', color:'black'}
+];
+const SUIT_COLOR = {s:'rgba(255,212,71,0.9)',h:'rgba(210,50,50,1)',d:'rgba(210,50,50,1)',c:'rgba(255,212,71,0.9)'};
+const SUIT_SYM   = {s:'♠',h:'♥',d:'♦',c:'♣'};
+
+const STREET_ACTIONS = {
+  flop:  ['Check','Call','Bet','C-Bet','Raise','Bluff','Fold','All-In'],
+  turn:  ['Check','Call','Bet','Raise','Bluff','Fold','All-In'],
+  river: ['Check','Call','Bet','Raise','Bluff','Fold','All-In']
+};
+const ACT_KEY = {'Check':'check','Call':'call','Bet':'bet','C-Bet':'cbet','Raise':'raise','Bluff':'bluff','Fold':'fold','All-In':'allin'};
+const ACT_SEL = {check:'sel-check',call:'sel-call',bet:'sel-bet',cbet:'sel-cbet',raise:'sel-raise',bluff:'sel-bluff',fold:'sel-fold',allin:'sel-allin'};
+
+// ── Storage ──
+function loadSessions(){ try{ return JSON.parse(localStorage.getItem('fcSessions')||'[]'); }catch(e){ return []; } }
+function saveSessions(arr){ localStorage.setItem('fcSessions',JSON.stringify(arr)); }
+function getActive(){ return loadSessions().find(s=>s.active)||null; }
+function saveActive(s){ let all=loadSessions(); let i=all.findIndex(x=>x.id===s.id); if(i>=0)all[i]=s; else all.push(s); saveSessions(all); }
+
+// ── State ──
+let currentSession = null;
+let activeStreet = 'preflop'; // preflop | flop | turn | river | result
+let handState = freshHand();
+// cards[slot] = {rank, suit} — slot keys: 'c0'..'c4' (community), 'h1','h2' (hero), 'v1a','v1b','v2a','v2b','v3a','v3b'
+let cards = {};
+let villainCount = 0; // 0..3
+// positions[key] = position string | null — keys: 'hero', 'v1', 'v2', 'v3'
+let positions = {};
+
+const POSITIONS = ['UTG','UTG+1','MP','HJ','CO','BTN','SB','BB'];
+
+function freshHand(){
+  return { preflop:null, flop:{actions:[]}, turn:{actions:[]}, river:{actions:[]}, result:0, pot:null, heroStack:null, villainStack:null, notes:'' };
+}
+
+// ── Init ──
+(function init(){
+  buildStreetActionBtns();
+  let active = getActive();
+  if(active){
+    currentSession = active;
+    showSession();
+  } else {
+    document.getElementById('setupOverlay').classList.add('open');
+  }
+})();
+
+function buildStreetActionBtns(){
+  ['flop','turn','river'].forEach(street=>{
+    let el = document.getElementById(street+'Actions');
+    el.innerHTML = STREET_ACTIONS[street].map(label=>{
+      let key = ACT_KEY[label];
+      return `<button class="act-btn" data-act="${key}" onclick="toggleStreetAction('${street}','${key}',this)">${label}</button>`;
+    }).join('');
+  });
+}
+
+// ── Start session ──
+function startSession(){
+  let venue=(document.getElementById('venueInput').value||'').trim();
+  if(!venue){ let el=document.getElementById('venueInput'); el.style.borderColor='rgba(200,50,50,0.6)'; el.focus(); return; }
+  document.getElementById('venueInput').style.borderColor='';
+  currentSession={
+    id:Date.now(), active:true,
+    venue, gameType:document.getElementById('gameTypeSelect').value,
+    stake:(document.getElementById('stakeInput').value||'').trim(),
+    buyin:parseInt(document.getElementById('buyinInput').value)||0,
+    startedAt:new Date().toISOString(), hands:[], pnl:0
+  };
+  saveActive(currentSession);
+  showSession();
+}
+
+function showSession(){
+  document.getElementById('setupOverlay').classList.remove('open');
+  document.getElementById('endOverlay').classList.remove('open');
+  document.getElementById('sessionShell').classList.add('open');
+  resetHand();
+  renderTable();
+  renderSessionBar();
+  renderHistoryStrip();
+}
+
+// ── Table card rendering ──
+function renderTable(){
+  renderCommunityRow();
+  renderHeroRow();
+  renderVillainRows();
+}
+
+function renderCommunityRow(){
+  let el = document.getElementById('communityRow');
+  // keep label
+  let label = el.querySelector('.cards-row-label');
+  el.innerHTML = '';
+  if(label) el.appendChild(label);
+  // show slots based on active street
+  let visible = activeStreet==='preflop'||activeStreet==='flop' ? 0 :
+                activeStreet==='turn' ? 3 :
+                activeStreet==='river' ? 4 : 5;
+  // result shows all 5
+  if(activeStreet==='result') visible=5;
+  for(let i=0;i<5;i++){
+    if(i<visible || activeStreet==='result'){
+      el.appendChild(makePCardEl('c'+i, `Board ${i+1}`));
+    } else if(i<3 && activeStreet==='flop'){
+      // flop: show 3 empty community slots
+      el.appendChild(makePCardEl('c'+i, `Board ${i+1}`));
+    } else {
+      let gap = document.createElement('div');
+      gap.className='pcard-gap'; el.appendChild(gap);
+    }
+  }
+}
+
+// More precise community visibility by street
+function communityVisible(){
+  if(activeStreet==='preflop') return 0;
+  if(activeStreet==='flop')    return 3;
+  if(activeStreet==='turn')    return 4;
+  return 5; // river + result
+}
+function renderCommunityRowStreet(){
+  let n = communityVisible();
+  let el = document.getElementById('communityRow');
+  let label = el.querySelector('.cards-row-label');
+  el.innerHTML='';
+  if(label) el.appendChild(label);
+  for(let i=0;i<5;i++){
+    if(i<n){
+      el.appendChild(makePCardEl('c'+i,`Board ${i+1}`));
+    } else {
+      let gap=document.createElement('div'); gap.className='pcard-gap'; el.appendChild(gap);
+    }
+  }
+}
+
+function renderHeroRow(){
+  let el=document.getElementById('heroRow');
+  let label=el.querySelector('.cards-row-label');
+  el.innerHTML=''; if(label) el.appendChild(label);
+  el.appendChild(makePCardEl('h1','Hero 1'));
+  el.appendChild(makePCardEl('h2','Hero 2'));
+  el.appendChild(makePosBadge('hero'));
+}
+
+function renderVillainRows(){
+  let el=document.getElementById('villainRows');
+  el.innerHTML='';
+  for(let v=1;v<=villainCount;v++){
+    let row=document.createElement('div');
+    row.className='cards-row';
+    row.innerHTML=`<span class="cards-row-label">V${v}</span>`;
+    row.appendChild(makePCardEl('v'+v+'a',`V${v} Card 1`));
+    row.appendChild(makePCardEl('v'+v+'b',`V${v} Card 2`));
+    row.appendChild(makePosBadge('v'+v));
+    el.appendChild(row);
+  }
+  // add villain button if <3
+  if(villainCount<3){
+    let addRow=document.createElement('div');
+    addRow.className='cards-row';
+    addRow.innerHTML=`<span class="cards-row-label"></span>`;
+    let btn=document.createElement('div');
+    btn.className='villain-add-btn'; btn.textContent='+';
+    btn.title='Add villain';
+    btn.onclick=()=>{ villainCount++; renderVillainRows(); };
+    addRow.appendChild(btn);
+    if(villainCount>0){
+      let rm=document.createElement('div');
+      rm.className='villain-add-btn'; rm.textContent='−'; rm.style.fontSize='20px';
+      rm.title='Remove villain';
+      rm.onclick=()=>{ if(villainCount>0){ delete cards['v'+villainCount+'a']; delete cards['v'+villainCount+'b']; villainCount--; renderVillainRows(); }};
+      addRow.appendChild(rm);
+    }
+    el.appendChild(addRow);
+  }
+}
+
+function makePCardEl(slot, title){
+  let c=cards[slot];
+  let el=document.createElement('div');
+  el.className='pcard '+(c&&(c.rank||c.suit)?'filled':'empty');
+  el.title=title;
+  el.dataset.slot=slot;
+  if(c&&(c.rank||c.suit)){
+    let isRed=(c.suit==='h'||c.suit==='d');
+    el.innerHTML=`<div class="pcard-inner" style="color:${isRed?'#c0202a':'#1a1a1a'}">${c.rank||'?'}</div><div class="pcard-suit" style="color:${isRed?'#c0202a':'#1a1a1a'}">${SUIT_SYM[c.suit]||''}</div>`;
+  } else {
+    el.innerHTML=`<div class="pcard-inner">+</div>`;
+  }
+  el.onclick=()=>openPicker(slot,title);
+  return el;
+}
+
+function makePosBadge(key){
+  let pos = positions[key]||null;
+  let badge = document.createElement('span');
+  badge.className = 'pos-badge'+(pos?' set':'');
+  badge.textContent = pos || 'POS';
+  badge.dataset.posKey = key;
+  badge.onclick = () => cyclePosition(key, badge);
+  return badge;
+}
+function cyclePosition(key, badge){
+  let cur = positions[key]||null;
+  let idx = cur ? POSITIONS.indexOf(cur) : -1;
+  let next = POSITIONS[(idx+1) % POSITIONS.length];
+  // if we've wrapped back to index 0 and were already set, allow clearing by second full cycle — instead tap UTG→...→BB→clear
+  if(idx === POSITIONS.length-1){ positions[key]=null; badge.textContent='POS'; badge.className='pos-badge'; }
+  else { positions[key]=next; badge.textContent=next; badge.className='pos-badge set'; }
+}
+
+// ── Card picker ──
+let pickerSlot=null;
+function openPicker(slot, title){
+  pickerSlot=slot;
+  let c=cards[slot]||{};
+  document.getElementById('pickerTitle').textContent=title;
+  // rank grid
+  let rg=document.getElementById('pickerRankGrid');
+  rg.innerHTML=RANKS.map(r=>`<button class="rank-btn${c.rank===r?' sel':''}" onclick="pickRank('${r}')">${r}</button>`).join('');
+  // suit row
+  let sr=document.getElementById('pickerSuitRow');
+  sr.innerHTML=SUITS.map(s=>`<button class="suit-btn${c.suit===s.key?' sel-'+s.key:''}" onclick="pickSuit('${s.key}')" style="color:${SUIT_COLOR[s.key]}">${s.sym}</button>`).join('');
+  document.getElementById('pickerBackdrop').classList.add('open');
+  document.getElementById('pickerSheet').classList.add('open');
+}
+function closePicker(){
+  document.getElementById('pickerBackdrop').classList.remove('open');
+  document.getElementById('pickerSheet').classList.remove('open');
+  pickerSlot=null;
+}
+function pickRank(rank){
+  if(!pickerSlot) return;
+  if(!cards[pickerSlot]) cards[pickerSlot]={rank:null,suit:null};
+  cards[pickerSlot].rank = cards[pickerSlot].rank===rank ? null : rank;
+  refreshPickerHighlights();
+  refreshTableCard(pickerSlot);
+  // auto-close when both rank and suit are set
+  if(cards[pickerSlot].rank && cards[pickerSlot].suit) closePicker();
+}
+function pickSuit(suit){
+  if(!pickerSlot) return;
+  if(!cards[pickerSlot]) cards[pickerSlot]={rank:null,suit:null};
+  cards[pickerSlot].suit = cards[pickerSlot].suit===suit ? null : suit;
+  refreshPickerHighlights();
+  refreshTableCard(pickerSlot);
+  if(cards[pickerSlot].rank && cards[pickerSlot].suit) closePicker();
+}
+function clearPickerCard(){
+  if(!pickerSlot) return;
+  delete cards[pickerSlot];
+  refreshPickerHighlights();
+  refreshTableCard(pickerSlot);
+}
+function refreshPickerHighlights(){
+  let c=cards[pickerSlot]||{};
+  document.querySelectorAll('#pickerRankGrid .rank-btn').forEach(b=>{ b.className='rank-btn'+(b.textContent===c.rank?' sel':''); });
+  document.querySelectorAll('#pickerSuitRow .suit-btn').forEach(b=>{
+    let sk=SUITS.find(s=>s.sym===b.textContent)?.key;
+    b.className='suit-btn'+(sk===c.suit?' sel-'+sk:'');
+  });
+}
+function refreshTableCard(slot){
+  let existing=document.querySelector(`.pcard[data-slot="${slot}"]`);
+  if(!existing) return;
+  let parent=existing.parentNode;
+  let newEl=makePCardEl(slot,existing.title);
+  parent.replaceChild(newEl,existing);
+}
+
+// ── Street tabs ──
+function switchTab(street){
+  let tab=document.querySelector(`.street-tab[data-street="${street}"]`);
+  if(!tab||tab.classList.contains('locked')) return;
+  setActiveStreet(street);
+}
+function setActiveStreet(street){
+  activeStreet=street;
+  // tabs
+  document.querySelectorAll('.street-tab').forEach(t=>{
+    let ts=t.dataset.street;
+    if(ts===street) t.classList.add('active');
+    else t.classList.remove('active');
+  });
+  // panes
+  document.querySelectorAll('.street-pane,.result-pane').forEach(p=>{ p.classList.remove('active'); });
+  let pane=document.getElementById('pane-'+street);
+  if(pane) pane.classList.add('active');
+  // update community cards visibility
+  renderCommunityRowStreet();
+}
+function unlockTab(street){
+  let t=document.querySelector(`.street-tab[data-street="${street}"]`);
+  if(t) t.classList.remove('locked');
+}
+function markTabDone(street){
+  let t=document.querySelector(`.street-tab[data-street="${street}"]`);
+  if(t){ t.classList.remove('active'); t.classList.add('done'); }
+}
+
+// ── Preflop action ──
+function selectPF(act, btn){
+  document.querySelectorAll('#pfActions .act-btn').forEach(b=>b.className='act-btn');
+  handState.preflop = (handState.preflop===act) ? null : act;
+  if(handState.preflop && btn) btn.className='act-btn sel-'+act.replace(/[^a-z]/g,'');
+}
+function advanceStreet(from){
+  // require a preflop selection before advancing
+  if(from==='preflop'&&!handState.preflop){
+    let ag=document.getElementById('pfActions');
+    ag.style.outline='2px solid rgba(200,50,50,0.5)'; ag.style.borderRadius='6px';
+    setTimeout(()=>{ag.style.outline='';ag.style.borderRadius='';},800);
+    return;
+  }
+  markTabDone(from);
+  let next = from==='preflop'?'flop': from==='flop'?'turn': from==='turn'?'river': 'result';
+  // if folded preflop, skip to result
+  if(from==='preflop' && handState.preflop==='fold') next='result';
+  unlockTab(next);
+  setActiveStreet(next);
+}
+function foldStreet(street){
+  // record fold for this street
+  handState[street].actions=['fold'];
+  document.querySelectorAll(`#${street}Actions .act-btn`).forEach(b=>{
+    b.className='act-btn'+(b.dataset.act==='fold'?' sel-fold':'');
+  });
+  markTabDone(street);
+  unlockTab('result');
+  setActiveStreet('result');
+}
+
+// ── Street multi-select ──
+function toggleStreetAction(street, act, btn){
+  let actions=handState[street].actions;
+  let idx=actions.indexOf(act);
+  if(idx>=0){ actions.splice(idx,1); btn.className='act-btn'; }
+  else { actions.push(act); btn.className='act-btn '+(ACT_SEL[act]||'sel-bet'); }
+}
+
+// ── Result ──
+function onStackChange(){
+  let hero=parseInt(document.getElementById('heroStack').value)||0;
+  if(hero>0){
+    let s=document.getElementById('resultSlider');
+    s.min=-hero; s.max=hero;
+    document.getElementById('sliderMin').textContent='-$'+hero;
+    document.getElementById('sliderMax').textContent='+$'+hero;
+    let cur=parseInt(s.value)||0;
+    s.value=Math.max(-hero,Math.min(hero,cur));
+    setResult(parseInt(s.value));
+  }
+}
+function onSliderInput(val){ setResult(parseInt(val)); }
+function setResult(val){
+  handState.result=val;
+  let el=document.getElementById('resultDisplay');
+  el.textContent=val===0?'±$0':(val>0?'+$'+val:'-$'+Math.abs(val));
+  el.className='result-display '+(val>0?'pos':val<0?'neg':'zero');
+  let s=document.getElementById('resultSlider'); if(s) s.value=val;
+}
+
+// ── Log hand ──
+function logHand(){
+  if(!handState.preflop){
+    switchTab('preflop');
+    let ag=document.getElementById('pfActions');
+    ag.style.outline='2px solid rgba(200,50,50,0.5)'; ag.style.borderRadius='6px';
+    setTimeout(()=>{ag.style.outline='';ag.style.borderRadius='';},800);
+    return;
+  }
+  handState.pot    = parseInt(document.getElementById('potSize').value)||null;
+  handState.heroStack   = parseInt(document.getElementById('heroStack').value)||null;
+  handState.villainStack= parseInt(document.getElementById('villainStack').value)||null;
+  handState.notes  = document.getElementById('handNotes').value.trim();
+
+  // snapshot positions
+  let handPositions={hero:positions['hero']||null};
+  for(let v=1;v<=villainCount;v++) handPositions['v'+v]=positions['v'+v]||null;
+
+  // snapshot cards
+  let handCards={
+    hero:[{...cards['h1']||{}},{...cards['h2']||{}}],
+    community:[0,1,2,3,4].map(i=>({...cards['c'+i]||{}})),
+    villains:[]
+  };
+  for(let v=1;v<=villainCount;v++){
+    handCards.villains.push([{...cards['v'+v+'a']||{}},{...cards['v'+v+'b']||{}}]);
+  }
+
+  let hand={
+    id:Date.now(),
+    preflop:handState.preflop,
+    flop: handState.flop.actions.length ? {...handState.flop} : null,
+    turn: handState.turn.actions.length ? {...handState.turn} : null,
+    river:handState.river.actions.length ? {...handState.river} : null,
+    result:handState.result,
+    pot:handState.pot,
+    heroStack:handState.heroStack,
+    villainStack:handState.villainStack,
+    notes:handState.notes,
+    cards:handCards,
+    positions:handPositions
+  };
+
+  currentSession.hands.push(hand);
+  currentSession.pnl=(currentSession.pnl||0)+handState.result;
+  saveActive(currentSession);
+  resetHand();
+  renderSessionBar();
+  renderHistoryStrip();
+}
+
+// ── Reset for next hand ──
+function resetHand(){
+  handState=freshHand();
+  cards={};
+  villainCount=0;
+  positions={};
+  activeStreet='preflop';
+  // reset action buttons
+  document.querySelectorAll('#pfActions .act-btn').forEach(b=>b.className='act-btn');
+  ['flop','turn','river'].forEach(s=>{ document.querySelectorAll(`#${s}Actions .act-btn`).forEach(b=>b.className='act-btn'); });
+  // reset tabs
+  document.querySelectorAll('.street-tab').forEach(t=>{
+    t.classList.remove('active','done');
+    if(t.dataset.street!=='preflop') t.classList.add('locked');
+    else t.classList.add('active');
+  });
+  // reset panes
+  document.querySelectorAll('.street-pane,.result-pane').forEach(p=>p.classList.remove('active'));
+  document.getElementById('pane-preflop').classList.add('active');
+  // reset result
+  setResult(0);
+  let s=document.getElementById('resultSlider'); if(s){s.min=-500;s.max=500;s.value=0;}
+  document.getElementById('sliderMin').textContent='-$500';
+  document.getElementById('sliderMax').textContent='+$500';
+  document.getElementById('potSize').value='';
+  document.getElementById('heroStack').value='';
+  document.getElementById('villainStack').value='';
+  document.getElementById('handNotes').value='';
+  // re-render table
+  renderTable();
+  updateHandNumber();
+}
+
+function updateHandNumber(){
+  let n=(currentSession.hands||[]).length+1;
+  document.getElementById('handNumber').textContent='Hand #'+n;
+}
+
+// ── Session bar ──
+function renderSessionBar(){
+  if(!currentSession) return;
+  let hands=currentSession.hands||[];
+  let n=hands.length, vpip=0, pfr=0;
+  hands.forEach(h=>{ if(h.preflop&&h.preflop!=='fold'){vpip++; if(h.preflop==='raise'||h.preflop==='3bet') pfr++;} });
+  let pnl=currentSession.pnl||0;
+  document.getElementById('sbHands').textContent=n;
+  document.getElementById('sbVpip').textContent=n>0?Math.round(vpip/n*100)+'%':'–';
+  document.getElementById('sbPfr').textContent=n>0?Math.round(pfr/n*100)+'%':'–';
+  let el=document.getElementById('sbPnl');
+  el.textContent=pnl===0?'±$0':(pnl>0?'+$'+pnl:'-$'+Math.abs(pnl));
+  el.style.color=pnl>0?'#2ecc71':pnl<0?'#e07070':'rgba(255,255,255,0.35)';
+}
+
+// ── History dots ──
+function renderHistoryStrip(){
+  let hands=(currentSession?.hands||[]);
+  let el=document.getElementById('historyStrip');
+  el.innerHTML=hands.map((h,i)=>{
+    let cls=h.preflop==='fold'?'fold':(h.result>0?'win':h.result<0?'loss':'even');
+    let lbl=h.preflop==='fold'?'F':(h.result>0?'+':h.result<0?'−':'=');
+    return `<div class="hh-dot ${cls}" title="Hand ${i+1}">${lbl}</div>`;
+  }).join('');
+}
+
+// ── End session ──
+function openEndSession(){
+  if(!currentSession) return;
+  let hands=currentSession.hands||[], n=hands.length, pnl=currentSession.pnl||0;
+  let vpip=0,pfr=0,folds=0;
+  hands.forEach(h=>{ if(h.preflop==='fold')folds++; else{vpip++;if(h.preflop==='raise'||h.preflop==='3bet')pfr++;} });
+  let pnlStr=pnl===0?'±$0':(pnl>0?'+$'+pnl:'-$'+Math.abs(pnl));
+  document.getElementById('endSummaryStats').innerHTML=`
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+      ${[['Hands',n,'#ffd447'],['P&L',pnlStr,pnl>0?'#2ecc71':pnl<0?'#e07070':'rgba(255,255,255,0.35)'],
+         ['VPIP',n>0?Math.round(vpip/n*100)+'%':'–','#ffd447'],['PFR',n>0?Math.round(pfr/n*100)+'%':'–','#ffd447']]
+        .map(([l,v,c])=>`<div style="background:rgba(0,0,0,0.25);border:1px solid rgba(255,212,71,0.1);border-radius:7px;padding:9px;text-align:center;"><span style="font-size:18px;font-weight:bold;color:${c};font-family:'Courier New',monospace;display:block;">${v}</span><span style="font-size:9px;color:rgba(255,212,71,0.4);letter-spacing:1.2px;text-transform:uppercase;">${l}</span></div>`).join('')}
+    </div>`;
+  document.getElementById('cashoutInput').value='';
+  document.getElementById('sessionNotes').value='';
+  document.getElementById('endOverlay').classList.add('open');
+}
+function closeEndSession(){ document.getElementById('endOverlay').classList.remove('open'); }
+function endSession(){
+  if(!currentSession) return;
+  let co=document.getElementById('cashoutInput').value;
+  if(co!==''){let v=parseInt(co);if(!isNaN(v)) currentSession.pnl=v-(currentSession.buyin||0);}
+  let now=new Date();
+  currentSession.active=false;
+  currentSession.endedAt=now.toISOString();
+  currentSession.durationMins=Math.round((now-new Date(currentSession.startedAt))/60000);
+  currentSession.sessionNotes=document.getElementById('sessionNotes').value.trim();
+  saveActive(currentSession);
+  currentSession=null;
+  window.location.href='index.html';
+}
+function discardSession(){
+  if(!confirm('Discard this session? All data will be lost.')) return;
+  let all=loadSessions().filter(s=>s.id!==currentSession.id);
+  saveSessions(all);
+  currentSession=null;
+  window.location.href='index.html';
+}
+function goHome(){ window.location.href='index.html'; }
+</script>
+
+<script>
+if('serviceWorker' in navigator){ navigator.serviceWorker.register('sw.js').catch(()=>{}); }
+</script>
+</body>
+</html>

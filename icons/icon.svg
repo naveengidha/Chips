@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="80" fill="#08090f"/>
+  <circle cx="256" cy="256" r="220" stroke="rgba(184,150,46,0.5)" stroke-width="6" fill="none"/>
+  <path d="M256 80 L380 140 L380 260 Q380 340 256 400 Q132 340 132 260 L132 140 Z"
+        fill="rgba(255,212,71,0.07)" stroke="#8B6914" stroke-width="5"/>
+  <text x="185" y="236" font-size="60" fill="rgba(255,212,71,0.8)" font-family="Georgia,serif">♠</text>
+  <text x="265" y="236" font-size="60" fill="rgba(180,60,60,0.9)" font-family="Georgia,serif">♥</text>
+  <text x="185" y="310" font-size="60" fill="rgba(180,60,60,0.9)" font-family="Georgia,serif">♦</text>
+  <text x="265" y="310" font-size="60" fill="rgba(255,212,71,0.8)" font-family="Georgia,serif">♣</text>
+</svg>
