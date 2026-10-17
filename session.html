@@ -45,43 +45,61 @@ body{display:flex;flex-direction:column;height:100dvh;max-height:100dvh;overflow
 /* Top nav */
 #sessionShell .topnav{flex-shrink:0;}
 
-/* ── TABLE CARD ── */
+/* ── TABLE CARD — oval felt ── */
 .table-card{
   flex-shrink:0;
-  background:radial-gradient(ellipse at 50% 60%, #1a4a2e 0%, #0e2d1a 55%, #081a10 100%);
-  border-bottom:2px solid rgba(255,212,71,0.15);
-  padding:8px 12px 10px;
   position:relative;
+  height:clamp(210px,52vw,280px);
+  background:radial-gradient(ellipse at 50% 44%, #1e5233 0%, #0e2d1a 60%, #081a10 100%);
+  border-bottom:2px solid rgba(255,212,71,0.15);
+  overflow:hidden;
 }
-/* felt texture overlay */
+/* felt texture */
 .table-card::before{
   content:'';position:absolute;inset:0;
   background:repeating-linear-gradient(0deg,rgba(0,0,0,0.04) 0,rgba(0,0,0,0.04) 1px,transparent 1px,transparent 3px),
              repeating-linear-gradient(90deg,rgba(0,0,0,0.04) 0,rgba(0,0,0,0.04) 1px,transparent 1px,transparent 3px);
-  pointer-events:none;
+  pointer-events:none;z-index:0;
 }
-/* table rail edge */
+/* oval rail — sits in upper 78% of the container, leaving bottom margin for hero */
+.table-oval{
+  position:absolute;
+  top:4px; bottom:22%; left:10px; right:10px;
+  border-radius:50%;
+  border:2px solid rgba(139,94,60,0.35);
+  box-shadow:0 0 0 1px rgba(255,212,71,0.08),inset 0 0 20px rgba(0,0,0,0.3);
+  pointer-events:none;z-index:0;
+}
+/* bottom rail highlight */
 .table-card::after{
   content:'';position:absolute;bottom:0;left:0;right:0;height:3px;
   background:linear-gradient(90deg,transparent,rgba(255,212,71,0.2),transparent);
+  z-index:0;
 }
 
-/* history dots row */
-.history-row{display:flex;align-items:center;gap:3px;margin-bottom:8px;min-height:18px;flex-wrap:wrap;}
-.hh-dot{width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:7px;font-weight:bold;flex-shrink:0;}
+/* history strip — absolutely inside the felt, top-left */
+.history-row{
+  position:absolute;top:5px;left:10px;right:10px;
+  display:flex;align-items:center;gap:2px;flex-wrap:wrap;
+  z-index:2;pointer-events:none;min-height:10px;
+}
+.hh-dot{width:10px;height:10px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:5px;font-weight:bold;flex-shrink:0;}
 .hh-dot.win{background:rgba(46,204,113,0.25);color:#2ecc71;border:1px solid rgba(46,204,113,0.4);}
 .hh-dot.loss{background:rgba(220,80,80,0.2);color:#e07070;border:1px solid rgba(220,80,80,0.35);}
 .hh-dot.fold{background:rgba(120,120,140,0.12);color:rgba(180,180,200,0.45);border:1px solid rgba(150,150,170,0.18);}
 .hh-dot.even{background:rgba(255,255,255,0.05);color:rgba(255,255,255,0.28);border:1px solid rgba(255,255,255,0.1);}
 
-/* card rows */
-.cards-area{display:flex;flex-direction:column;gap:6px;position:relative;z-index:1;}
-.cards-row{display:flex;align-items:center;gap:4px;}
-.cards-row-label{font-size:8px;font-weight:bold;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,0.25);width:44px;flex-shrink:0;text-align:right;padding-right:6px;}
+/* board cards — centered within the oval (which sits in upper ~78% of container) */
+.board-center{
+  position:absolute;top:37%;left:50%;
+  transform:translate(-50%,-50%);
+  display:flex;gap:3px;align-items:center;
+  z-index:2;
+}
 
 /* individual playing card */
 .pcard{
-  width:36px;height:50px;border-radius:5px;
+  width:30px;height:42px;border-radius:4px;
   display:flex;flex-direction:column;align-items:center;justify-content:center;
   cursor:pointer;flex-shrink:0;position:relative;
   border:1px solid rgba(255,255,255,0.12);
@@ -90,26 +108,90 @@ body{display:flex;flex-direction:column;height:100dvh;max-height:100dvh;overflow
 }
 .pcard:active{transform:scale(0.94);}
 .pcard.empty{background:rgba(255,255,255,0.04);border-style:dashed;border-color:rgba(255,255,255,0.1);}
-.pcard.empty .pcard-inner{color:rgba(255,255,255,0.12);font-size:14px;}
+.pcard.empty .pcard-inner{color:rgba(255,255,255,0.12);font-size:11px;}
 .pcard.filled{background:#fff;}
 .pcard.filled-red{background:#fff;}
-.pcard-inner{font-size:15px;font-weight:bold;font-family:'Georgia',serif;line-height:1;text-align:center;}
+.pcard-inner{font-size:12px;font-weight:bold;font-family:'Georgia',serif;line-height:1;text-align:center;}
 .pcard.filled .pcard-inner,.pcard.filled-red .pcard-inner{color:#1a1a1a;}
-.pcard-suit{font-size:11px;line-height:1;text-align:center;}
+.pcard-suit{font-size:9px;line-height:1;text-align:center;}
 .pcard.filled .pcard-suit-red{color:#c0202a;}
 .pcard.filled .pcard-suit-black{color:#1a1a1a;}
-/* community placeholder gap */
-.pcard-gap{width:36px;height:50px;flex-shrink:0;opacity:0;pointer-events:none;}
-/* villain add button */
-.villain-add-btn{width:30px;height:30px;background:rgba(255,255,255,0.05);border:1px dashed rgba(255,255,255,0.18);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;color:rgba(255,255,255,0.3);flex-shrink:0;margin-left:2px;}
-.villain-add-btn:active{background:rgba(255,255,255,0.1);}
+.pcard-gap{width:30px;height:42px;flex-shrink:0;opacity:0;pointer-events:none;}
 
-/* position stepper */
-.pos-stepper{display:flex;align-items:center;gap:0;flex-shrink:0;border:1px solid rgba(255,255,255,0.1);border-radius:4px;overflow:hidden;}
-.pos-step-btn{background:rgba(255,255,255,0.04);border:none;color:rgba(255,212,71,0.5);font-size:14px;font-weight:bold;cursor:pointer;padding:3px 7px;line-height:1;-webkit-user-select:none;flex-shrink:0;}
-.pos-step-btn:active{background:rgba(255,212,71,0.1);color:#ffd447;}
-.pos-step-label{font-size:9px;font-weight:bold;letter-spacing:.8px;padding:3px 5px;background:rgba(255,255,255,0.03);color:rgba(255,255,255,0.28);min-width:34px;text-align:center;-webkit-user-select:none;}
-.pos-step-label.set{background:rgba(255,212,71,0.1);color:rgba(255,212,71,0.85);}
+/* seat — absolutely positioned around the oval */
+.seat{
+  position:absolute;
+  display:flex;flex-direction:column;align-items:center;gap:1px;
+  z-index:3;
+  transform:translate(-50%,-50%);
+  cursor:default;
+}
+/* hero seat anchors from bottom so it always sits inside the container */
+.seat.hero-seat{
+  transform:translate(-50%,0);
+  bottom:6px;
+  top:auto !important;
+}
+.seat-label{font-size:7px;font-weight:bold;letter-spacing:.8px;text-transform:uppercase;color:rgba(255,255,255,0.3);line-height:1;margin-bottom:1px;}
+.seat-label.hero-lbl{color:rgba(255,212,71,0.7);}
+.seat-cards{display:flex;gap:2px;}
+/* position badge under cards */
+.seat-pos{
+  display:flex;align-items:center;gap:0;
+  border:1px solid rgba(255,255,255,0.1);border-radius:3px;overflow:hidden;
+  margin-top:1px;
+}
+.seat-pos-btn{background:rgba(255,255,255,0.04);border:none;color:rgba(255,212,71,0.5);font-size:11px;font-weight:bold;cursor:pointer;padding:2px 4px;line-height:1;-webkit-user-select:none;}
+.seat-pos-btn:active{background:rgba(255,212,71,0.1);color:#ffd447;}
+.seat-pos-lbl{font-size:7px;font-weight:bold;letter-spacing:.5px;padding:2px 3px;background:rgba(255,255,255,0.03);color:rgba(255,255,255,0.25);min-width:24px;text-align:center;-webkit-user-select:none;}
+.seat-pos-lbl.set{background:rgba(255,212,71,0.1);color:rgba(255,212,71,0.85);}
+/* dealer button chip */
+.dealer-btn{
+  position:absolute;top:-7px;right:-7px;
+  width:14px;height:14px;border-radius:50%;
+  background:linear-gradient(135deg,#e8e0c8,#fff);
+  color:#1a1a1a;font-size:6px;font-weight:bold;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 1px 3px rgba(0,0,0,0.6);
+  pointer-events:none;z-index:5;
+  letter-spacing:0;font-family:'Georgia',serif;
+}
+/* ghost seat — unoccupied table position */
+.seat-ghost{
+  position:absolute;transform:translate(-50%,-50%);
+  display:flex;flex-direction:column;align-items:center;gap:2px;
+  z-index:2;
+}
+.ghost-pos-lbl{
+  font-size:7px;font-weight:bold;letter-spacing:.8px;text-transform:uppercase;
+  color:rgba(255,255,255,0.18);
+  background:rgba(255,255,255,0.04);
+  border:1px solid rgba(255,255,255,0.08);
+  border-radius:3px;padding:2px 4px;
+}
+.seat-ghost:hover .ghost-pos-lbl,.seat-ghost:active .ghost-pos-lbl{
+  border-color:rgba(255,212,71,0.2);color:rgba(255,212,71,0.4);
+}
+/* dealer chip on ghost seat */
+.ghost-dealer{
+  position:static;margin-top:1px;
+  pointer-events:none;
+}
+
+/* remove villain — small tap target near hero */
+.villain-remove{
+  position:absolute;bottom:4px;right:8px;
+  font-size:9px;color:rgba(255,255,255,0.2);
+  background:none;border:none;cursor:pointer;
+  letter-spacing:.5px;z-index:4;padding:4px;
+  font-family:'Georgia',serif;
+}
+.villain-remove:active{color:rgba(255,100,100,0.6);}
+
+/* position stepper (kept for potential reuse but seats use .seat-pos now) */
+.pos-stepper{display:none;}
+
+
 
 /* ── INPUT PANEL (fills remaining space) ── */
 .input-panel{
@@ -141,8 +223,15 @@ body{display:flex;flex-direction:column;height:100dvh;max-height:100dvh;overflow
 .act-btn.sel-limp,.act-btn.sel-call{background:rgba(46,100,200,0.15);color:rgba(120,180,255,0.9);border-color:rgba(80,140,240,0.35);}
 .act-btn.sel-raise,.act-btn.sel-3bet,.act-btn.sel-bet,.act-btn.sel-cbet{background:rgba(200,140,46,0.15);color:rgba(255,200,80,0.9);border-color:rgba(220,160,46,0.4);}
 .act-btn.sel-check{background:rgba(46,160,100,0.15);color:rgba(100,220,150,0.9);border-color:rgba(46,180,100,0.35);}
-.act-btn.sel-bluff{background:rgba(200,50,50,0.15);color:rgba(255,110,110,0.9);border-color:rgba(200,60,60,0.4);}
 .act-btn.sel-allin{background:rgba(140,50,200,0.15);color:rgba(200,130,255,0.9);border-color:rgba(160,70,220,0.4);}
+
+/* Amount input (shown when bet/raise/3bet selected) */
+.amount-row{display:none;align-items:center;gap:8px;flex-shrink:0;}
+.amount-row.visible{display:flex;}
+.amount-label{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,212,71,0.45);white-space:nowrap;}
+.amount-input{flex:1;padding:7px 10px;border-radius:5px;border:1px solid rgba(139,94,60,0.2);border-bottom:2px solid rgba(255,212,71,0.3);background:#0d0f1a;color:#ffd447;font-size:15px;font-family:'Courier New',monospace;color-scheme:dark;text-align:center;}
+.amount-input::placeholder{color:rgba(255,255,255,0.2);font-family:'Georgia',serif;font-size:12px;}
+.amount-input:focus{outline:none;border-color:rgba(255,212,71,0.6);}
 
 /* Street nav row (Fold / advance) */
 .street-nav{display:flex;gap:6px;flex-shrink:0;}
@@ -182,6 +271,8 @@ input[type=range].result-slider::-moz-range-thumb{width:28px;height:28px;border-
 .sb-item span{font-weight:bold;color:#fff;font-family:'Courier New',monospace;font-size:13px;}
 
 /* ════ CARD PICKER BOTTOM SHEET ════ */
+.rank-btn.dead{opacity:.2;pointer-events:none;}
+.suit-btn.dead{opacity:.2;pointer-events:none;}
 .picker-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:400;}
 .picker-backdrop.open{display:block;}
 .picker-sheet{position:fixed;bottom:0;left:0;right:0;background:#0d0f1a;border-radius:16px 16px 0 0;border-top:1px solid rgba(255,212,71,0.2);padding:14px 14px max(env(safe-area-inset-bottom),16px);z-index:401;transform:translateY(100%);transition:transform .25s ease;}
@@ -253,24 +344,11 @@ input[type=range].result-slider::-moz-range-thumb{width:28px;height:28px;border-
   </div>
 
   <!-- TABLE CARD -->
-  <div class="table-card">
-    <!-- history dots -->
+  <div class="table-card" id="tableCard">
+    <div class="table-oval"></div>
     <div class="history-row" id="historyStrip"></div>
-
-    <div class="cards-area">
-      <!-- Community cards -->
-      <div class="cards-row" id="communityRow">
-        <span class="cards-row-label">Board</span>
-        <!-- 5 community slots, populated by JS -->
-      </div>
-      <!-- Hero -->
-      <div class="cards-row" id="heroRow">
-        <span class="cards-row-label">Hero</span>
-        <!-- 2 hero slots -->
-      </div>
-      <!-- Villain rows (up to 3) -->
-      <div id="villainRows"></div>
-    </div>
+    <div class="board-center" id="communityRow"></div>
+    <!-- seats injected by JS -->
   </div>
 
   <!-- INPUT PANEL -->
@@ -295,6 +373,10 @@ input[type=range].result-slider::-moz-range-thumb{width:28px;height:28px;border-
         <button class="act-btn" data-act="raise" onclick="selectPF('raise',this)">Raise</button>
         <button class="act-btn" data-act="3bet"  onclick="selectPF('3bet',this)">3-Bet</button>
       </div>
+      <div class="amount-row" id="pfAmountRow">
+        <span class="amount-label">Amount ($)</span>
+        <input class="amount-input" id="pfAmount" type="number" inputmode="numeric" placeholder="0" min="0" oninput="handState.preflopAmount=parseInt(this.value)||null">
+      </div>
       <div class="street-nav">
         <button class="snav-btn fold" onclick="selectPF('fold',document.querySelector('#pfActions [data-act=fold]'));advanceStreet('preflop')">Fold &amp; Log →</button>
         <button class="snav-btn" onclick="advanceStreet('preflop')">Flop →</button>
@@ -304,6 +386,10 @@ input[type=range].result-slider::-moz-range-thumb{width:28px;height:28px;border-
     <!-- FLOP PANE -->
     <div class="street-pane" id="pane-flop">
       <div class="action-group" id="flopActions"></div>
+      <div class="amount-row" id="flopAmountRow">
+        <span class="amount-label">Amount ($)</span>
+        <input class="amount-input" id="flopAmount" type="number" inputmode="numeric" placeholder="0" min="0" oninput="handState.flop.amount=parseInt(this.value)||null">
+      </div>
       <div class="street-nav">
         <button class="snav-btn fold" onclick="foldStreet('flop')">Fold &amp; Result →</button>
         <button class="snav-btn" onclick="advanceStreet('flop')">Turn →</button>
@@ -313,6 +399,10 @@ input[type=range].result-slider::-moz-range-thumb{width:28px;height:28px;border-
     <!-- TURN PANE -->
     <div class="street-pane" id="pane-turn">
       <div class="action-group" id="turnActions"></div>
+      <div class="amount-row" id="turnAmountRow">
+        <span class="amount-label">Amount ($)</span>
+        <input class="amount-input" id="turnAmount" type="number" inputmode="numeric" placeholder="0" min="0" oninput="handState.turn.amount=parseInt(this.value)||null">
+      </div>
       <div class="street-nav">
         <button class="snav-btn fold" onclick="foldStreet('turn')">Fold &amp; Result →</button>
         <button class="snav-btn" onclick="advanceStreet('turn')">River →</button>
@@ -322,6 +412,10 @@ input[type=range].result-slider::-moz-range-thumb{width:28px;height:28px;border-
     <!-- RIVER PANE -->
     <div class="street-pane" id="pane-river">
       <div class="action-group" id="riverActions"></div>
+      <div class="amount-row" id="riverAmountRow">
+        <span class="amount-label">Amount ($)</span>
+        <input class="amount-input" id="riverAmount" type="number" inputmode="numeric" placeholder="0" min="0" oninput="handState.river.amount=parseInt(this.value)||null">
+      </div>
       <div class="street-nav">
         <button class="snav-btn" onclick="advanceStreet('river')">Result →</button>
       </div>
@@ -414,12 +508,12 @@ const SUIT_COLOR = {s:'rgba(255,212,71,0.9)',h:'rgba(210,50,50,1)',d:'rgba(210,5
 const SUIT_SYM   = {s:'♠',h:'♥',d:'♦',c:'♣'};
 
 const STREET_ACTIONS = {
-  flop:  ['Check','Call','Bet','C-Bet','Raise','Bluff','Fold','All-In'],
-  turn:  ['Check','Call','Bet','Raise','Bluff','Fold','All-In'],
-  river: ['Check','Call','Bet','Raise','Bluff','Fold','All-In']
+  flop:  ['Check','Call','Bet','C-Bet','Raise','Fold','All-In'],
+  turn:  ['Check','Call','Bet','Raise','Fold','All-In'],
+  river: ['Check','Call','Bet','Raise','Fold','All-In']
 };
-const ACT_KEY = {'Check':'check','Call':'call','Bet':'bet','C-Bet':'cbet','Raise':'raise','Bluff':'bluff','Fold':'fold','All-In':'allin'};
-const ACT_SEL = {check:'sel-check',call:'sel-call',bet:'sel-bet',cbet:'sel-cbet',raise:'sel-raise',bluff:'sel-bluff',fold:'sel-fold',allin:'sel-allin'};
+const ACT_KEY = {'Check':'check','Call':'call','Bet':'bet','C-Bet':'cbet','Raise':'raise','Fold':'fold','All-In':'allin'};
+const ACT_SEL = {check:'sel-check',call:'sel-call',bet:'sel-bet',cbet:'sel-cbet',raise:'sel-raise',fold:'sel-fold',allin:'sel-allin'};
 
 // ── Storage ──
 function loadSessions(){ try{ return JSON.parse(localStorage.getItem('fcSessions')||'[]'); }catch(e){ return []; } }
@@ -456,7 +550,7 @@ function positionsForCount(n){
 function sessionPositions(){ return positionsForCount(currentSession?.playerCount||6); }
 
 function freshHand(){
-  return { preflop:null, flop:{actions:[]}, turn:{actions:[]}, river:{actions:[]}, result:0, pot:null, heroStack:null, villainStack:null, notes:'' };
+  return { preflop:null, preflopAmount:null, flop:{actions:[],amount:null}, turn:{actions:[],amount:null}, river:{actions:[],amount:null}, result:0, pot:null, heroStack:null, villainStack:null, notes:'' };
 }
 
 // ── Init ──
@@ -510,200 +604,265 @@ function showSession(){
 }
 
 // ── Table card rendering ──
-function renderTable(){
-  renderCommunityRow();
-  renderHeroRow();
-  renderVillainRows();
+
+// Oval center is at ~50% x, ~39% y (upper portion of container).
+// rx=43% of width, ry=35% of height — keeps seats clear of the bottom hero zone.
+// Hero is placed separately at the bottom via CSS class, not via seatXY.
+function seatXY(angleDeg){
+  let a = angleDeg * Math.PI / 180;
+  let cx=50, cy=39, rx=43, ry=35;
+  return { x: cx + rx*Math.cos(a), y: cy + ry*Math.sin(a) };
 }
 
-function renderCommunityRow(){
-  let el = document.getElementById('communityRow');
-  // keep label
-  let label = el.querySelector('.cards-row-label');
-  el.innerHTML = '';
-  if(label) el.appendChild(label);
-  // show slots based on active street
-  let visible = activeStreet==='preflop'||activeStreet==='flop' ? 0 :
-                activeStreet==='turn' ? 3 :
-                activeStreet==='river' ? 4 : 5;
-  // result shows all 5
-  if(activeStreet==='result') visible=5;
-  for(let i=0;i<5;i++){
-    if(i<visible || activeStreet==='result'){
-      el.appendChild(makePCardEl('c'+i, `Board ${i+1}`));
-    } else if(i<3 && activeStreet==='flop'){
-      // flop: show 3 empty community slots
-      el.appendChild(makePCardEl('c'+i, `Board ${i+1}`));
+function renderTable(){
+  renderSeats();
+  renderCommunityRowStreet();
+}
+
+function renderSeats(){
+  let tc = document.getElementById('tableCard');
+  tc.querySelectorAll('.seat,.seat-ghost,.villain-remove').forEach(e=>e.remove());
+
+  let posList = sessionPositions();
+  let N = posList.length;
+
+  let heroPos = positions['hero']||null;
+  let heroIdx = heroPos ? posList.indexOf(heroPos) : -1;
+
+  function angleFor(i){
+    let offset = heroIdx >= 0 ? (i - heroIdx) : i;
+    return (90 + offset * (360/N) + 3600) % 360;
+  }
+
+  let posToKey = {};
+  if(heroPos) posToKey[heroPos]='hero';
+  for(let v=1;v<=villainCount;v++){
+    let vp=positions['v'+v]||null;
+    if(vp) posToKey[vp]='v'+v;
+  }
+
+  // Hero always at bottom-center — fixed position, anchored from top via hero-seat class
+  {
+    let seat=document.createElement('div');
+    seat.className='seat hero-seat'; seat.style.left='50%'; seat.style.bottom='6px'; seat.style.top='auto';
+
+    let lbl=document.createElement('div');
+    lbl.className='seat-label hero-lbl'; lbl.textContent='Hero';
+    seat.appendChild(lbl);
+
+    let cardRow=document.createElement('div');
+    cardRow.className='seat-cards'; cardRow.style.position='relative';
+    cardRow.appendChild(makePCardEl('h1','Hero 1'));
+    cardRow.appendChild(makePCardEl('h2','Hero 2'));
+    if(heroPos==='BTN'){ let chip=document.createElement('div'); chip.className='dealer-btn'; chip.textContent='D'; cardRow.appendChild(chip); }
+    seat.appendChild(cardRow);
+
+    let posRow=document.createElement('div');
+    posRow.className='seat-pos'; posRow.dataset.posKey='hero';
+    let hprev=document.createElement('button'); hprev.className='seat-pos-btn'; hprev.textContent='‹';
+    hprev.onclick=e=>{e.stopPropagation();shiftPosition('hero',-1);};
+    let hposLbl=document.createElement('span');
+    hposLbl.className='seat-pos-lbl'+(heroPos?' set':''); hposLbl.textContent=heroPos||'–';
+    let hnext=document.createElement('button'); hnext.className='seat-pos-btn'; hnext.textContent='›';
+    hnext.onclick=e=>{e.stopPropagation();shiftPosition('hero',+1);};
+    posRow.appendChild(hprev); posRow.appendChild(hposLbl); posRow.appendChild(hnext);
+    seat.appendChild(posRow);
+    tc.appendChild(seat);
+  }
+
+  // All other position slots — skip hero's slot, render as villain or ghost
+  posList.forEach((pos,i)=>{
+    if(pos===heroPos) return;
+
+    let {x,y} = seatXY(angleFor(i));
+    let key = posToKey[pos]||null;
+
+    if(key){
+      let seat=document.createElement('div');
+      seat.className='seat'; seat.style.left=x+'%'; seat.style.top=y+'%';
+
+      let lbl=document.createElement('div');
+      lbl.className='seat-label'; lbl.textContent=key.toUpperCase();
+      seat.appendChild(lbl);
+
+      let cardRow=document.createElement('div');
+      cardRow.className='seat-cards'; cardRow.style.position='relative';
+      let n=key.slice(1);
+      cardRow.appendChild(makePCardEl('v'+n+'a',key.toUpperCase()+' 1'));
+      cardRow.appendChild(makePCardEl('v'+n+'b',key.toUpperCase()+' 2'));
+      if(pos==='BTN'){ let chip=document.createElement('div'); chip.className='dealer-btn'; chip.textContent='D'; cardRow.appendChild(chip); }
+      seat.appendChild(cardRow);
+
+      let posRow=document.createElement('div');
+      posRow.className='seat-pos'; posRow.dataset.posKey=key;
+      let vprev=document.createElement('button'); vprev.className='seat-pos-btn'; vprev.textContent='‹';
+      vprev.onclick=e=>{e.stopPropagation();shiftPosition(key,-1);};
+      let vposLbl=document.createElement('span'); vposLbl.className='seat-pos-lbl set'; vposLbl.textContent=pos;
+      let vnext=document.createElement('button'); vnext.className='seat-pos-btn'; vnext.textContent='›';
+      vnext.onclick=e=>{e.stopPropagation();shiftPosition(key,+1);};
+      posRow.appendChild(vprev); posRow.appendChild(vposLbl); posRow.appendChild(vnext);
+      seat.appendChild(posRow);
+      tc.appendChild(seat);
+
     } else {
-      let gap = document.createElement('div');
-      gap.className='pcard-gap'; el.appendChild(gap);
+      let ghost=document.createElement('div');
+      ghost.className='seat-ghost'; ghost.style.left=x+'%'; ghost.style.top=y+'%';
+
+      let glbl=document.createElement('div');
+      glbl.className='ghost-pos-lbl'; glbl.textContent=pos;
+      ghost.appendChild(glbl);
+
+      if(pos==='BTN'){
+        let chip=document.createElement('div');
+        chip.className='dealer-btn ghost-dealer'; chip.textContent='D';
+        ghost.appendChild(chip);
+      }
+
+      if(villainCount < 3){
+        ghost.style.cursor='pointer';
+        ghost.onclick=()=>{ villainCount++; positions['v'+villainCount]=pos; renderSeats(); };
+      }
+      tc.appendChild(ghost);
     }
+  });
+
+  if(villainCount>0){
+    let rm=document.createElement('button');
+    rm.className='villain-remove'; rm.textContent='− villain';
+    rm.onclick=()=>{
+      delete cards['v'+villainCount+'a'];
+      delete cards['v'+villainCount+'b'];
+      delete positions['v'+villainCount];
+      villainCount--;
+      renderSeats();
+    };
+    tc.appendChild(rm);
   }
 }
 
-// More precise community visibility by street
+
 function communityVisible(){
   if(activeStreet==='preflop') return 0;
   if(activeStreet==='flop')    return 3;
   if(activeStreet==='turn')    return 4;
-  return 5; // river + result
+  return 5;
 }
 function renderCommunityRowStreet(){
-  let n = communityVisible();
-  let el = document.getElementById('communityRow');
-  let label = el.querySelector('.cards-row-label');
+  let n=communityVisible();
+  let el=document.getElementById('communityRow');
+  el.style.display=n===0?'none':'';
   el.innerHTML='';
-  if(label) el.appendChild(label);
   for(let i=0;i<5;i++){
-    if(i<n){
-      el.appendChild(makePCardEl('c'+i,`Board ${i+1}`));
-    } else {
-      let gap=document.createElement('div'); gap.className='pcard-gap'; el.appendChild(gap);
-    }
+    if(i<n){ el.appendChild(makePCardEl('c'+i,'Board '+(i+1))); }
+    else { let g=document.createElement('div'); g.className='pcard-gap'; el.appendChild(g); }
   }
 }
+function renderCommunityRow(){ renderCommunityRowStreet(); }
 
-function renderHeroRow(){
-  let el=document.getElementById('heroRow');
-  let label=el.querySelector('.cards-row-label');
-  el.innerHTML=''; if(label) el.appendChild(label);
-  el.appendChild(makePCardEl('h1','Hero 1'));
-  el.appendChild(makePCardEl('h2','Hero 2'));
-  el.appendChild(makePosBadge('hero'));
-}
-
-function renderVillainRows(){
-  let el=document.getElementById('villainRows');
-  el.innerHTML='';
-  for(let v=1;v<=villainCount;v++){
-    let row=document.createElement('div');
-    row.className='cards-row';
-    row.innerHTML=`<span class="cards-row-label">V${v}</span>`;
-    row.appendChild(makePCardEl('v'+v+'a',`V${v} Card 1`));
-    row.appendChild(makePCardEl('v'+v+'b',`V${v} Card 2`));
-    row.appendChild(makePosBadge('v'+v));
-    el.appendChild(row);
-  }
-  // add villain button if <3
-  if(villainCount<3){
-    let addRow=document.createElement('div');
-    addRow.className='cards-row';
-    addRow.innerHTML=`<span class="cards-row-label"></span>`;
-    let btn=document.createElement('div');
-    btn.className='villain-add-btn'; btn.textContent='+';
-    btn.title='Add villain';
-    btn.onclick=()=>{ villainCount++; renderVillainRows(); };
-    addRow.appendChild(btn);
-    if(villainCount>0){
-      let rm=document.createElement('div');
-      rm.className='villain-add-btn'; rm.textContent='−'; rm.style.fontSize='20px';
-      rm.title='Remove villain';
-      rm.onclick=()=>{ if(villainCount>0){ delete cards['v'+villainCount+'a']; delete cards['v'+villainCount+'b']; villainCount--; renderVillainRows(); }};
-      addRow.appendChild(rm);
-    }
-    el.appendChild(addRow);
-  }
-}
-
-function makePCardEl(slot, title){
+function makePCardEl(slot,title){
   let c=cards[slot];
   let el=document.createElement('div');
   el.className='pcard '+(c&&(c.rank||c.suit)?'filled':'empty');
-  el.title=title;
-  el.dataset.slot=slot;
+  el.title=title; el.dataset.slot=slot;
   if(c&&(c.rank||c.suit)){
     let isRed=(c.suit==='h'||c.suit==='d');
-    el.innerHTML=`<div class="pcard-inner" style="color:${isRed?'#c0202a':'#1a1a1a'}">${c.rank||'?'}</div><div class="pcard-suit" style="color:${isRed?'#c0202a':'#1a1a1a'}">${SUIT_SYM[c.suit]||''}</div>`;
-  } else {
-    el.innerHTML=`<div class="pcard-inner">+</div>`;
-  }
-  el.onclick=()=>openPicker(slot,title);
+    el.innerHTML='<div class="pcard-inner" style="color:'+(isRed?'#c0202a':'#1a1a1a')+'">'+( c.rank||'?')+'</div><div class="pcard-suit" style="color:'+(isRed?'#c0202a':'#1a1a1a')+'">'+(SUIT_SYM[c.suit]||'')+'</div>';
+  } else { el.innerHTML='<div class="pcard-inner">+</div>'; }
+  el.onclick=()=>openPicker(slot);
   return el;
 }
 
-function makePosBadge(key){
-  let pos = positions[key]||null;
-  let wrap = document.createElement('div');
-  wrap.className = 'pos-stepper';
-  wrap.dataset.posKey = key;
-
-  let prev = document.createElement('button');
-  prev.className = 'pos-step-btn'; prev.textContent = '‹';
-  prev.onclick = e => { e.stopPropagation(); shiftPosition(key, -1); };
-
-  let label = document.createElement('span');
-  label.className = 'pos-step-label' + (pos ? ' set' : '');
-  label.textContent = pos || '–';
-
-  let next = document.createElement('button');
-  next.className = 'pos-step-btn'; next.textContent = '›';
-  next.onclick = e => { e.stopPropagation(); shiftPosition(key, +1); };
-
-  wrap.appendChild(prev);
-  wrap.appendChild(label);
-  wrap.appendChild(next);
-  return wrap;
+function shiftPosition(key,dir){
+  let list=sessionPositions();
+  let cur=positions[key]||null;
+  let idx=cur?list.indexOf(cur):-1;
+  let newIdx=idx===-1?(dir>0?0:list.length-1):(idx+dir+list.length)%list.length;
+  positions[key]=list[newIdx];
+  if(key==='hero') nextHeroPositionIdx=newIdx;
+  renderSeats();
 }
 
-function shiftPosition(key, dir){
-  let list = sessionPositions();
-  let cur = positions[key]||null;
-  let idx = cur ? list.indexOf(cur) : -1;
-  let newIdx;
-  if(idx === -1){
-    // nothing set yet — dir +1 starts at 0, dir -1 starts at end
-    newIdx = dir > 0 ? 0 : list.length - 1;
-  } else {
-    newIdx = (idx + dir + list.length) % list.length;
-  }
-  positions[key] = list[newIdx];
-  // if hero, also update the cursor for next-hand auto-advance
-  if(key === 'hero') nextHeroPositionIdx = newIdx;
-  // refresh just this stepper in the DOM
-  let wrap = document.querySelector(`.pos-stepper[data-pos-key="${key}"]`);
-  if(wrap){
-    let lbl = wrap.querySelector('.pos-step-label');
-    lbl.textContent = list[newIdx];
-    lbl.className = 'pos-step-label set';
-  }
-}
+
 
 // ── Card picker ──
 let pickerSlot=null;
-function openPicker(slot, title){
-  pickerSlot=slot;
-  let c=cards[slot]||{};
-  document.getElementById('pickerTitle').textContent=title;
-  // rank grid
+let pickerQueue=[];  // remaining slots to fill after current one
+
+function slotTitle(slot){
+  if(slot==='h1'||slot==='h2') return 'Hero '+(slot==='h1'?1:2);
+  if(slot.startsWith('c')) return 'Board '+(parseInt(slot[1])+1);
+  let m=slot.match(/^v(\d)([ab])$/);
+  if(m) return `V${m[1]} Card ${m[2]==='a'?1:2}`;
+  return slot;
+}
+
+function queueForSlot(slot){
+  // hero: both cards
+  if(slot==='h1') return ['h1','h2'];
+  if(slot==='h2') return ['h2'];
+  // community: flop opens all 3, turn/river open just that card
+  if(slot==='c0') return ['c0','c1','c2'];
+  if(slot==='c1') return ['c1','c2'];
+  if(slot==='c2') return ['c2'];
+  if(slot==='c3') return ['c3'];
+  if(slot==='c4') return ['c4'];
+  // villain: both cards of that villain
+  let m=slot.match(/^v(\d)([ab])$/);
+  if(m){ let n=m[1]; return m[2]==='a'?[`v${n}a`,`v${n}b`]:[`v${n}b`]; }
+  return [slot];
+}
+
+function openPicker(slot){
+  pickerQueue = queueForSlot(slot);
+  advancePicker();
+}
+
+function advancePicker(){
+  if(!pickerQueue.length){ closePicker(); return; }
+  pickerSlot = pickerQueue.shift();
+  let c=cards[pickerSlot]||{};
+  document.getElementById('pickerTitle').textContent=slotTitle(pickerSlot);
   let rg=document.getElementById('pickerRankGrid');
-  rg.innerHTML=RANKS.map(r=>`<button class="rank-btn${c.rank===r?' sel':''}" onclick="pickRank('${r}')">${r}</button>`).join('');
-  // suit row
+  rg.innerHTML=RANKS.map(r=>`<button class="rank-btn" onclick="pickRank('${r}')">${r}</button>`).join('');
   let sr=document.getElementById('pickerSuitRow');
-  sr.innerHTML=SUITS.map(s=>`<button class="suit-btn${c.suit===s.key?' sel-'+s.key:''}" onclick="pickSuit('${s.key}')" style="color:${SUIT_COLOR[s.key]}">${s.sym}</button>`).join('');
+  sr.innerHTML=SUITS.map(s=>`<button class="suit-btn" onclick="pickSuit('${s.key}')" style="color:${SUIT_COLOR[s.key]}">${s.sym}</button>`).join('');
+  refreshPickerHighlights();
   document.getElementById('pickerBackdrop').classList.add('open');
   document.getElementById('pickerSheet').classList.add('open');
 }
+
 function closePicker(){
   document.getElementById('pickerBackdrop').classList.remove('open');
   document.getElementById('pickerSheet').classList.remove('open');
   pickerSlot=null;
+  pickerQueue=[];
 }
 function pickRank(rank){
   if(!pickerSlot) return;
   if(!cards[pickerSlot]) cards[pickerSlot]={rank:null,suit:null};
-  cards[pickerSlot].rank = cards[pickerSlot].rank===rank ? null : rank;
+  let toggling = cards[pickerSlot].rank === rank;
+  if(!toggling){
+    let used = usedCards();
+    // if a suit is already chosen and this rank+suit is taken, reject
+    if(cards[pickerSlot].suit && used.has(rank+cards[pickerSlot].suit)) return;
+  }
+  cards[pickerSlot].rank = toggling ? null : rank;
   refreshPickerHighlights();
   refreshTableCard(pickerSlot);
-  // auto-close when both rank and suit are set
-  if(cards[pickerSlot].rank && cards[pickerSlot].suit) closePicker();
+  if(cards[pickerSlot].rank && cards[pickerSlot].suit) advancePicker();
 }
 function pickSuit(suit){
   if(!pickerSlot) return;
   if(!cards[pickerSlot]) cards[pickerSlot]={rank:null,suit:null};
-  cards[pickerSlot].suit = cards[pickerSlot].suit===suit ? null : suit;
+  let toggling = cards[pickerSlot].suit === suit;
+  if(!toggling){
+    let used = usedCards();
+    if(cards[pickerSlot].rank && used.has(cards[pickerSlot].rank+suit)) return;
+  }
+  cards[pickerSlot].suit = toggling ? null : suit;
   refreshPickerHighlights();
   refreshTableCard(pickerSlot);
-  if(cards[pickerSlot].rank && cards[pickerSlot].suit) closePicker();
+  if(cards[pickerSlot].rank && cards[pickerSlot].suit) advancePicker();
 }
 function clearPickerCard(){
   if(!pickerSlot) return;
@@ -711,12 +870,35 @@ function clearPickerCard(){
   refreshPickerHighlights();
   refreshTableCard(pickerSlot);
 }
+function usedCards(){
+  // returns a Set of 'Rs' strings for every fully-entered card except the current slot
+  let used = new Set();
+  Object.entries(cards).forEach(([slot, c])=>{
+    if(slot !== pickerSlot && c && c.rank && c.suit) used.add(c.rank+c.suit);
+  });
+  return used;
+}
 function refreshPickerHighlights(){
-  let c=cards[pickerSlot]||{};
-  document.querySelectorAll('#pickerRankGrid .rank-btn').forEach(b=>{ b.className='rank-btn'+(b.textContent===c.rank?' sel':''); });
+  let c = cards[pickerSlot]||{};
+  let used = usedCards();
+  // for each rank: dead if all 4 suits for that rank are taken (rare but possible),
+  // or if the currently-selected suit + this rank is already used
+  document.querySelectorAll('#pickerRankGrid .rank-btn').forEach(b=>{
+    let r = b.textContent;
+    let sel = r === c.rank;
+    // dead if: current suit is set and this rank+currentSuit is taken
+    // OR every suit for this rank is taken
+    let deadWithCurrentSuit = c.suit && used.has(r+c.suit);
+    let allSuitsTaken = SUITS.every(s => used.has(r+s.key));
+    let dead = !sel && (deadWithCurrentSuit || allSuitsTaken);
+    b.className = 'rank-btn' + (sel?' sel':'') + (dead?' dead':'');
+  });
   document.querySelectorAll('#pickerSuitRow .suit-btn').forEach(b=>{
-    let sk=SUITS.find(s=>s.sym===b.textContent)?.key;
-    b.className='suit-btn'+(sk===c.suit?' sel-'+sk:'');
+    let sk = SUITS.find(s=>s.sym===b.textContent)?.key;
+    let sel = sk === c.suit;
+    // dead if: current rank is set and rank+this suit is already used
+    let dead = !sel && c.rank && used.has(c.rank+sk);
+    b.className = 'suit-btn' + (sk===c.suit?' sel-'+sk:'') + (dead?' dead':'');
   });
 }
 function refreshTableCard(slot){
@@ -757,11 +939,28 @@ function markTabDone(street){
   if(t){ t.classList.remove('active'); t.classList.add('done'); }
 }
 
+const AMOUNT_ACTS = new Set(['bet','raise','3bet','cbet','call']);
+
 // ── Preflop action ──
+function amountLabel(actions){
+  // single action determines label; call wins if mixed (unusual)
+  if(actions.includes('call')) return 'Call ($)';
+  return 'Amount ($)';
+}
+
 function selectPF(act, btn){
   document.querySelectorAll('#pfActions .act-btn').forEach(b=>b.className='act-btn');
   handState.preflop = (handState.preflop===act) ? null : act;
   if(handState.preflop && btn) btn.className='act-btn sel-'+act.replace(/[^a-z]/g,'');
+  let row = document.getElementById('pfAmountRow');
+  let show = AMOUNT_ACTS.has(handState.preflop);
+  row.classList.toggle('visible', show);
+  if(show){
+    row.querySelector('.amount-label').textContent = amountLabel([handState.preflop]);
+    document.getElementById('pfAmount').focus();
+  } else {
+    handState.preflopAmount=null; document.getElementById('pfAmount').value='';
+  }
 }
 function advanceStreet(from){
   // require a preflop selection before advancing
@@ -795,6 +994,17 @@ function toggleStreetAction(street, act, btn){
   let idx=actions.indexOf(act);
   if(idx>=0){ actions.splice(idx,1); btn.className='act-btn'; }
   else { actions.push(act); btn.className='act-btn '+(ACT_SEL[act]||'sel-bet'); }
+  let show = actions.some(a=>AMOUNT_ACTS.has(a));
+  let row = document.getElementById(street+'AmountRow');
+  if(row){
+    row.classList.toggle('visible', show);
+    if(show){
+      row.querySelector('.amount-label').textContent = amountLabel(actions);
+      let inp=document.getElementById(street+'Amount'); if(inp) inp.focus();
+    } else {
+      handState[street].amount=null; let inp=document.getElementById(street+'Amount'); if(inp) inp.value='';
+    }
+  }
 }
 
 // ── Result ──
@@ -850,6 +1060,7 @@ function logHand(){
   let hand={
     id:Date.now(),
     preflop:handState.preflop,
+    preflopAmount:handState.preflopAmount||null,
     flop: handState.flop.actions.length ? {...handState.flop} : null,
     turn: handState.turn.actions.length ? {...handState.turn} : null,
     river:handState.river.actions.length ? {...handState.river} : null,
@@ -893,6 +1104,11 @@ function resetHand(){
   // reset action buttons
   document.querySelectorAll('#pfActions .act-btn').forEach(b=>b.className='act-btn');
   ['flop','turn','river'].forEach(s=>{ document.querySelectorAll(`#${s}Actions .act-btn`).forEach(b=>b.className='act-btn'); });
+  // reset amount rows
+  ['pf','flop','turn','river'].forEach(s=>{
+    let row=document.getElementById(s+'AmountRow'); if(row) row.classList.remove('visible');
+    let inp=document.getElementById(s+'Amount'); if(inp) inp.value='';
+  });
   // reset tabs
   document.querySelectorAll('.street-tab').forEach(t=>{
     t.classList.remove('active','done');
