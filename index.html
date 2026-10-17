@@ -125,6 +125,19 @@ h1{text-align:center;color:#ffd447;margin:0 0 4px;font-size:26px;letter-spacing:
 /* Empty states */
 .empty-state{text-align:center;color:rgba(255,255,255,0.25);padding:30px 20px;font-size:13px;line-height:2;}
 
+/* ── Position stats table ── */
+.pos-stats-section{margin-bottom:24px;}
+.pos-stats-title{font-size:10px;font-weight:bold;letter-spacing:2px;text-transform:uppercase;color:rgba(255,212,71,0.4);margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid rgba(255,212,71,0.1);}
+.pos-table{width:100%;border-collapse:collapse;}
+.pos-table th{font-size:8px;font-weight:bold;letter-spacing:1.2px;text-transform:uppercase;color:rgba(255,212,71,0.4);padding:4px 6px;text-align:right;border-bottom:1px solid rgba(255,212,71,0.12);}
+.pos-table th:first-child{text-align:left;}
+.pos-table td{font-size:12px;font-family:'Courier New',monospace;padding:6px 6px;text-align:right;border-bottom:1px solid rgba(255,255,255,0.04);color:rgba(255,255,255,0.75);}
+.pos-table td:first-child{font-family:'Georgia','Times New Roman',serif;font-size:11px;font-weight:bold;color:rgba(255,212,71,0.8);letter-spacing:.5px;text-align:left;}
+.pos-table tr:last-child td{border-bottom:none;}
+.pos-table .pnl-win{color:#2ecc71;}
+.pos-table .pnl-loss{color:#e07070;}
+.pos-table .pnl-even{color:rgba(255,255,255,0.35);}
+
 /* ── Delete button ── */
 .scard-delete{background:none;border:1px solid rgba(220,50,50,0.35);border-radius:8px;color:rgba(220,100,100,0.8);font-size:11px;font-weight:bold;padding:5px 12px;cursor:pointer;letter-spacing:.5px;align-self:flex-start;}
 .scard-delete:active{background:rgba(220,50,50,0.2);}
@@ -541,42 +554,136 @@ function buildHandDetail(h){
 }
 
 // ── Lifetime stats overlay ──
+function buildPositionStatsTable(sessions){
+  const POS_ORDER = ['UTG','UTG+1','UTG+2','MP','MP+1','LJ','HJ','CO','BTN','SB','BB'];
+  let byPos = {};
+  sessions.forEach(s=>{
+    (s.hands||[]).forEach(h=>{
+      let pos = h.positions?.hero;
+      if(!pos) return;
+      if(!byPos[pos]) byPos[pos] = {hands:0,vpip:0,pfr:0,pnl:0};
+      let p = byPos[pos];
+      p.hands++;
+      let pf = h.preflop||'';
+      if(pf!=='fold' && pf!=='') p.vpip++;
+      if(pf==='raise'||pf==='3bet') p.pfr++;
+      if(h.result!=null) p.pnl += h.result;
+    });
+  });
+  // Always show all known positions; extras from data appended
+  let seenExtras = Object.keys(byPos).filter(p=>!POS_ORDER.includes(p)).sort();
+  let positions = [...POS_ORDER, ...seenExtras];
+  let rows = positions.map(pos=>{
+    let p = byPos[pos];
+    if(!p) return `<tr><td>${esc(pos)}</td><td>–</td><td>–</td><td>–</td><td>–</td></tr>`;
+    let vpipPct = p.hands>0 ? Math.round(p.vpip/p.hands*100) : 0;
+    let pfrPct  = p.hands>0 ? Math.round(p.pfr/p.hands*100) : 0;
+    let pnlStr  = p.pnl===0?'±0':(p.pnl>0?'+$'+p.pnl:'-$'+Math.abs(p.pnl));
+    let pnlCls  = p.pnl>0?'pnl-win':p.pnl<0?'pnl-loss':'pnl-even';
+    return `<tr>
+      <td>${esc(pos)}</td>
+      <td>${p.hands}</td>
+      <td>${vpipPct}%</td>
+      <td>${pfrPct}%</td>
+      <td class="${pnlCls}">${pnlStr}</td>
+    </tr>`;
+  }).join('');
+  return `<div class="pos-stats-section">
+    <div class="pos-stats-title">Stats by Position</div>
+    <table class="pos-table">
+      <thead><tr>
+        <th>Pos</th><th>Hands</th><th>VPIP</th><th>PFR</th><th>P&amp;L</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  </div>`;
+}
+
+function buildStreetStatsTable(sessions){
+  const STREETS = ['preflop','flop','turn','river'];
+  const STREET_LABEL = {preflop:'Pre-Flop',flop:'Flop',turn:'Turn',river:'River'};
+  // Actions we want to count per street
+  const TRACK = ['fold','check','call','bet','raise','3bet','cbet','allin'];
+  const TRACK_LABEL = {fold:'Fold',check:'Check',call:'Call',bet:'Bet',raise:'Raise','3bet':'3-Bet',cbet:'C-Bet',allin:'All-In'};
+
+  // byStreet[street] = { hands: N, actions: { fold: N, check: N, ... } }
+  let byStreet = {};
+  STREETS.forEach(s=>{ byStreet[s] = {hands:0, actions:{}}; });
+
+  sessions.forEach(s=>{
+    (s.hands||[]).forEach(h=>{
+      // preflop: single string value
+      if(h.preflop !== undefined && h.preflop !== null && h.preflop !== ''){
+        let st = byStreet.preflop;
+        st.hands++;
+        let a = h.preflop;
+        st.actions[a] = (st.actions[a]||0) + 1;
+      }
+      // flop/turn/river: actions array
+      ['flop','turn','river'].forEach(street=>{
+        let sd = h[street];
+        if(!sd || !sd.actions || !sd.actions.length) return;
+        let st = byStreet[street];
+        st.hands++;
+        sd.actions.forEach(a=>{ st.actions[a] = (st.actions[a]||0) + 1; });
+      });
+    });
+  });
+
+  // Collect all action keys seen across all streets, in TRACK order + any extras
+  let allActions = [...TRACK];
+  STREETS.forEach(s=>{
+    Object.keys(byStreet[s].actions).forEach(a=>{ if(!allActions.includes(a)) allActions.push(a); });
+  });
+  // Only include actions seen at least once anywhere
+  allActions = allActions.filter(a=> STREETS.some(s=> byStreet[s].actions[a]>0));
+
+  let headerCols = allActions.map(a=>`<th>${esc(TRACK_LABEL[a]||a)}</th>`).join('');
+  let rows = STREETS.map(street=>{
+    let st = byStreet[street];
+    let handsCell = st.hands > 0 ? String(st.hands) : '–';
+    let actionCells = allActions.map(a=>{
+      if(!st.hands) return '<td>–</td>';
+      let n = st.actions[a]||0;
+      let pct = Math.round(n/st.hands*100);
+      return `<td>${n>0 ? pct+'%' : '–'}</td>`;
+    }).join('');
+    return `<tr><td>${STREET_LABEL[street]}</td><td>${handsCell}</td>${actionCells}</tr>`;
+  }).join('');
+
+  return `<div class="pos-stats-section">
+    <div class="pos-stats-title">Actions by Street</div>
+    <table class="pos-table">
+      <thead><tr>
+        <th>Street</th><th>Hands</th>${headerCols}
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  </div>`;
+}
+
 function openLifetimeStats(){
   let sessions = loadSessions().filter(s=>!s.active);
   let el = document.getElementById('lifetimeStatsBody');
   if(!sessions.length){
     el.innerHTML = '<div class="empty-state">No completed sessions yet.</div>';
   } else {
-    let totalHands=0, totalVpip=0, totalPfr=0, totalFolds=0, totalRaises=0, totalLimps=0, totalCbet=0, totalCbetOpp=0;
-    let totalPnl=0;
+    let totalHands=0, totalPnl=0;
     sessions.forEach(s=>{
       let st = calcSessionStats(s);
-      if(st){
-        totalHands += st.n;
-        totalVpip  += st.vpipPct * st.n;
-        totalPfr   += st.pfrPct  * st.n;
-        totalFolds += st.foldPct * st.n;
-        totalRaises+= st.raisePct* st.n;
-        totalLimps += st.limpPct * st.n;
-        if(st.cbetPct!=null){ totalCbet += st.cbetPct; totalCbetOpp++; }
-      }
+      if(st) totalHands += st.n;
       if(s.pnl!=null) totalPnl += s.pnl;
     });
-    let avg = v => totalHands>0 ? Math.round(v/totalHands) : 0;
-    let avgCbet = totalCbetOpp>0 ? Math.round(totalCbet/totalCbetOpp) : null;
     let pnlStr = totalPnl===0?'±$0':(totalPnl>0?'+$'+totalPnl:'-$'+Math.abs(totalPnl));
     el.innerHTML = `
-      <div class="full-stat-grid" style="margin-bottom:20px;">
-        <div class="rs-tile"><span class="rs-val">${avg(totalVpip)}%</span><span class="rs-lbl">VPIP</span></div>
-        <div class="rs-tile"><span class="rs-val">${avg(totalPfr)}%</span><span class="rs-lbl">PFR</span></div>
-        <div class="rs-tile"><span class="rs-val">${avg(totalFolds)}%</span><span class="rs-lbl">Fold %</span></div>
-        <div class="rs-tile"><span class="rs-val">${avg(totalLimps)}%</span><span class="rs-lbl">Limp %</span></div>
-        <div class="rs-tile"><span class="rs-val">${avg(totalRaises)}%</span><span class="rs-lbl">Raise %</span></div>
-        <div class="rs-tile"><span class="rs-val">${avgCbet!=null?avgCbet+'%':'–'}</span><span class="rs-lbl">C-Bet %</span></div>
-        <div class="rs-tile"><span class="rs-val">${totalHands}</span><span class="rs-lbl">Total Hands</span></div>
-        <div class="rs-tile"><span class="rs-val" style="color:${totalPnl>0?'#2ecc71':totalPnl<0?'#e07070':'rgba(255,255,255,0.4)'}">${pnlStr}</span><span class="rs-lbl">Total P&amp;L</span></div>
+      <div style="display:flex;gap:8px;margin-bottom:20px;">
+        <div class="rs-tile" style="flex:1;"><span class="rs-val">${totalHands}</span><span class="rs-lbl">Hands</span></div>
+        <div class="rs-tile" style="flex:1;"><span class="rs-val">${sessions.length}</span><span class="rs-lbl">Sessions</span></div>
+        <div class="rs-tile" style="flex:1;"><span class="rs-val" style="color:${totalPnl>0?'#2ecc71':totalPnl<0?'#e07070':'rgba(255,255,255,0.4)'}">${pnlStr}</span><span class="rs-lbl">Total P&amp;L</span></div>
       </div>
-      <div style="font-size:10px;font-weight:bold;letter-spacing:2px;text-transform:uppercase;color:rgba(255,212,71,0.4);margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid rgba(255,212,71,0.1);">Sessions (${sessions.length})</div>
+      ${buildPositionStatsTable(sessions)}
+      ${buildStreetStatsTable(sessions)}
+      <div style="font-size:10px;font-weight:bold;letter-spacing:2px;text-transform:uppercase;color:rgba(255,212,71,0.4);margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid rgba(255,212,71,0.1);">Sessions</div>
       ${sessions.map(s=>{
         let st = calcSessionStats(s);
         let pnl = s.pnl;
